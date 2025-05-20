@@ -1,14 +1,14 @@
 
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 
-@Test(description = "Tests that null JSON values are correctly handled")
-class Issue210Test {
+class Issue210Test : FunSpec({
     data class DClass(val some: String, val none: String?)
 
-    fun issue210() {
+    test("issue210: Tests that null JSON values are correctly handled") {
         val json = """
         {
         "some": "test",
@@ -17,7 +17,8 @@ class Issue210Test {
         """
 
         val p = Klaxon().parse<DClass>(json)
-        assertThat(p!!.none).isNull()
+        p.shouldNotBeNull()
+        p.none.shouldBeNull()
 
     }
-}
+})

@@ -1,11 +1,10 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.DataProvider
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.shouldBe
 
-@Test
-class PropertyOrderTest {
+class PropertyOrderTest: FunSpec ({
     /**
      * Order the list based on the value ordering specified in order. The result string needs to contain
      * the values specified in order in the same order, while values in list but not in order will be
@@ -13,7 +12,7 @@ class PropertyOrderTest {
      *
      * For example, "abcdef" ordered with "df" will produce "dfabce".
      */
-    private fun orderWithKeys(list: List<String>, order: List<String>): List<String> {
+    fun orderWithKeys(list: List<String>, order: List<String>): List<String> {
         val comparator = Comparator<String> { o1, o2 ->
             val index1 = order.indexOf(o1)
             // If the current value is not specified in the order, it stays where it is.
@@ -30,8 +29,7 @@ class PropertyOrderTest {
         return list.sortedWith(comparator)
     }
 
-    @DataProvider
-    fun dp() = arrayOf(
+    arrayOf(
             arrayOf(listOf("a", "b"), listOf("a", "b"), listOf("a", "b")),
             arrayOf(listOf("a", "b"), listOf("b", "a"), listOf("b", "a")),
             arrayOf(listOf("a", "b", "c"), listOf("a", "b"), listOf("a", "b", "c")),
@@ -39,27 +37,27 @@ class PropertyOrderTest {
 
             arrayOf(listOf("a", "b", "c", "d", "e", "f"), listOf("f", "e", "d"), listOf("f", "e", "d", "a", "b", "c")),
             arrayOf(listOf("a", "c", "e", "d", "f", "b"), listOf("f", "e", "d"), listOf("f", "e", "d", "a", "c", "b"))
-    )
-
-
-    @Test(dataProvider = "dp")
-    fun testOrderWithKeys(list: List<String>, order: List<String>, expected: List<String>) {
-        println("=== Test case: $list $order")
-        val result = orderWithKeys(list, order)
-        assertThat(result).isEqualTo(expected)
+    ).forEach { (list: List<String>, order: List<String>, expected: List<String>) ->
+        test("orderWithKeys: $list $order") {
+            val result = orderWithKeys(list, order)
+            result shouldBe expected
+        }
     }
 
-    fun testOrderWithIndex() {
+    test("OrderWithIndex") {
         class Data(@Json(index = 1) val id: String,
                 @Json(index = 2) val name: String)
-        Klaxon().toJsonString(Data("id", "foo")).let {
-            assertThat(it.indexOf("id")).isLessThan(it.indexOf("name"))
-        }
+        var result = Klaxon().toJsonString(Data("id", "foo"))
+
+        result.indexOf("id").shouldBeLessThan(result.indexOf("name"))
+
 
         class Data2(@Json(index = 3) val id: String,
                 @Json(index = 2) val name: String)
-        Klaxon().toJsonString(Data2("id", "foo")).let {
-            assertThat(it.indexOf("name")).isLessThan(it.indexOf("id"))
-        }
+
+        result = Klaxon().toJsonString(Data2("id", "foo"))
+
+        result.indexOf("name").shouldBeLessThan(result.indexOf("id"))
+
     }
-}
+})

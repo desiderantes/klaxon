@@ -1,17 +1,19 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import kotlin.reflect.KProperty
 
-@Test
-class Issue180Test {
-    fun issue180() {
+
+class Issue180Test : FunSpec({
+    test("issue180") {
         val x = Klaxon().toJsonString(CharacterPlayer(12))
         val char = Klaxon().parse<CharacterPlayer>(x)
-        assertThat(char!!.id).isEqualTo(12)
+        char.shouldNotBeNull()
+        char.id shouldBe 12
     }
-}
+})
 
 
 class CharacterPlayer(val id: Int){

@@ -1,12 +1,12 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.string.shouldContain
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@Test
-class Issue221Test {
+class Issue221Test : FunSpec() {
     class WithDate constructor(val name: String, @ESDate val birth: LocalDate)
 
     @Target(AnnotationTarget.FIELD)
@@ -18,9 +18,12 @@ class Issue221Test {
         override fun toJson(value: Any) = (value as LocalDate).format(DateTimeFormatter.ofPattern("Y/M/d"))
     }
 
-    fun issue221() {
-        val k = Klaxon().fieldConverter(ESDate::class, dateConverter)
-        val s = k.toJsonString(WithDate("hha", LocalDate.of(2018, 11, 30)))
-        assertThat(s).contains("2018/11/30")
+    init {
+
+        test("issue221") {
+            val k = Klaxon().fieldConverter(ESDate::class, dateConverter)
+            val s = k.toJsonString(WithDate("hha", LocalDate.of(2018, 11, 30)))
+            s shouldContain "2018/11/30"
+        }
     }
 }

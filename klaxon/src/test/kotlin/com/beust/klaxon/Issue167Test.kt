@@ -1,6 +1,7 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+
 
 data class TestObject(
     val a: Int,
@@ -8,9 +9,8 @@ data class TestObject(
     val b: String,
     val c: Float)
 
-@Test
-class Issue167Test {
-    fun issue167() {
+class Issue167Test : FunSpec({
+    test("issue167") {
         val aJsonObject = json {
             obj("a" to 1, "b" to "value")
         }
@@ -30,4 +30,4 @@ class Issue167Test {
             )
         }
     }
-}
+})

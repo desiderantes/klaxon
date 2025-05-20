@@ -1,11 +1,11 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-@Test
-class Issue149 {
-    fun issue149() {
+
+class Issue149 : FunSpec({
+    test("issue149") {
         val nodes = """{
             "nodes": {
                 "1": {
@@ -26,11 +26,12 @@ class Issue149 {
                 }
         }}
         """
-        data class Node(val x:Float, val y:Float)
-        data class Floor (val nodes:HashMap<String, Node>)
+
+        data class Node(val x: Double, val y: Double)
+        data class Floor(val nodes: HashMap<String, Node>)
+
         val r = Klaxon().parse<Floor>(nodes)
-        assertThat(r!!.nodes["1"]).isEqualTo(
-                Node(123.3236517713532f, 12.932982478667043f))
+        r!!.nodes["1"] shouldBe Node(123.3236517713532, 12.932982478667043)
     }
 
-}
+})

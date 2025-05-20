@@ -21,7 +21,7 @@ class DefaultConverter(private val klaxon: Klaxon, private val allPaths: HashMap
         val classifier = jv.propertyKClass?.classifier
         val result =
             when(value) {
-                is Boolean, is String -> value
+                is Boolean, is String, is Char -> value
                 is Int -> fromInt(value, propertyType)
                 is BigInteger, is BigDecimal -> value
                 is Double ->
@@ -52,8 +52,8 @@ class DefaultConverter(private val klaxon: Klaxon, private val allPaths: HashMap
             = open + list.joinToString(", ") + close
 
         val result = when (value) {
-            is String, is Enum<*> -> "\"" + Render.escapeString(value.toString()) + "\""
-            is Double, is Float, is Int, is Boolean, is Long -> value.toString()
+            is String, is Char, is Enum<*> -> "\"" + Render.escapeString(value.toString()) + "\""
+            is Double, is Float, is Int, is Boolean, is Long, is Byte, is Short -> value.toString()
             is Array<*> -> {
                 val elements = value.map { klaxon.toJsonString(it) }
                 joinToString(elements, "[", "]")
@@ -100,8 +100,14 @@ class DefaultConverter(private val klaxon: Klaxon, private val allPaths: HashMap
     private fun fromInt(value: Int, propertyType: java.lang.reflect.Type?): Any {
         // If the value is an Int and the property is a Long, widen it
         val isLong = java.lang.Long::class.java == propertyType || Long::class.java == propertyType
+        // If the value is an Int and the property is a Short, shorten it
+        val isShort = java.lang.Short::class.java == propertyType || Short::class.java == propertyType
+        // If the value is an Int and the property is a Byte, shorten it
+        val isByte = java.lang.Byte::class.java == propertyType || Byte::class.java == propertyType
         val result: Any = when {
             isLong -> value.toLong()
+            isShort -> value.toShort()
+            isByte -> value.toByte()
             propertyType == BigDecimal::class.java -> BigDecimal(value)
             else -> value
         }

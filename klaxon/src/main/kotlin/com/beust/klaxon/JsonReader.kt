@@ -139,7 +139,7 @@ class JsonReader(val reader: Reader) : Reader() {
         reader.close()
     }
 
-    override fun read(cbuf: CharArray?, off: Int, len: Int): Int {
+    override fun read(cbuf: CharArray, off: Int, len: Int): Int {
         return reader.read(cbuf, off, len)
     }
 

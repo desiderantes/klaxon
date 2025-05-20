@@ -1,13 +1,12 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.AnnotationSpec
 
-@Test
-class Issue132Test {
-    @Test(expectedExceptions = [(KlaxonException::class)])
+
+class Issue132Test : AnnotationSpec() {
+    @Test(expected = KlaxonException::class)
     fun recursion() {
-
-        class KNode(val next: KNode)
+        class KNode(val next: KNode?)
 
         val converter = object : Converter {
             override fun canConvert(cls: Class<*>): Boolean = cls == Node::class.java
@@ -20,8 +19,6 @@ class Issue132Test {
                 return ""
             }
         }
-
         Klaxon().converter(converter).parse<KNode>("{}")
-
     }
 }

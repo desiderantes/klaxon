@@ -79,7 +79,7 @@ internal fun parseJsonArray(node: JsonNode) = json {
 private fun KlaxonJson.parseJsonObject(node: JsonNode): JsonObject {
     val pairs =
         node
-            .fields()
+            .properties()
             .asSequence()
             .map { it.key to parseValue(it.value) }
             .toList()

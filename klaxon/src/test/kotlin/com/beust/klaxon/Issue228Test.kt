@@ -1,18 +1,21 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.types.shouldBeTypeOf
 import java.math.BigDecimal
 
-@Test
-class Issue228Test {
-    fun issue228() {
-        data class CurrencySnapshot(val rates: Map<String, BigDecimal>)
 
+class Issue228Test : FunSpec({
+
+    data class CurrencySnapshot(val rates: Map<String, BigDecimal>)
+
+    test("issue228") {
         val parsed = Klaxon().parse<CurrencySnapshot>("{\"rates\":{\"EUR\":1,\"FJD\":2.434077,}}")
         listOf("FJD", "EUR").forEach {
-            val v = parsed!!.rates[it]!!
-            if (v !is BigDecimal) throw AssertionError("Field $it is not of type BigDecimal: " + v::class)
+            val v = parsed!!.rates[it]
+            v.shouldNotBeNull()
+            v.shouldBeTypeOf<BigDecimal>()
         }
     }
-
-}
+})

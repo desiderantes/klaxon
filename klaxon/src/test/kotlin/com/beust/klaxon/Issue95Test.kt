@@ -1,36 +1,34 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-class Issue95Test {
-    @Test
-    fun deserializeStringArray() {
+class Issue95Test: FunSpec({
+    test("deserializeStringArray") {
         val mapper = Klaxon()
         val data = listOf("foo", "bar", "baz")
         val json = mapper.toJsonString(data)
-        assertThat(mapper.parseArray<String>(json)).isEqualTo(data)
+        mapper.parseArray<String>(json) shouldBe data
     }
 
-    @Test
-    fun deserializeIntArray() {
+    test("deserializeIntArray") {
         val mapper = Klaxon()
-        val data = listOf(1,2,3)
+        val data = listOf(1, 2, 3)
         val json = mapper.toJsonString(data)
-        assertThat(mapper.parseArray<Int>(json)).isEqualTo(data)
+        mapper.parseArray<Int>(json) shouldBe data
     }
 
-    @Test
-    fun deserializeObjectArray() {
+    test("deserializeObjectArray") {
         val mapper = Klaxon()
         data class Person(val name: String)
         val data = listOf(Person("John"), Person("Jane"))
         val json = mapper.toJsonString(data)
-        assertThat(mapper.parseArray<Person>(json)).isEqualTo(data)
+        mapper.parseArray<Person>(json) shouldBe data
     }
 
-    @Test
-    fun serializeStringArrayToObjectArray() {
+
+    test("serializeStringArrayToObjectArray") {
         data class Person(val id: String, val name: String)
         class PersonConverter: Converter {
             override fun canConvert(cls: Class<*>) = cls == Person::class.java
@@ -45,6 +43,7 @@ class Issue95Test {
         val mapper = Klaxon().converter(PersonConverter())
         val json = mapper.toJsonString(data)
         val result = mapper.parseArray<Person>(json)
-        assertThat(result).isEqualTo(data)
+        result.shouldNotBeNull()
+        result shouldBe data
     }
-}
+})

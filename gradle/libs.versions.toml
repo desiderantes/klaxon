@@ -1,0 +1,23 @@
+[versions]
+java = "17"
+kotlin = "2.1.21"
+kotest = "5.9.1"
+
+jackson = "2.19.0"
+
+[libraries]
+
+jackson-databind = {group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson"}
+kotlin-stdlib = {group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin"}
+kotlin-reflect = {group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin"}
+kotlin-test = {group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin"}
+
+kotest-runner-junit5 = {group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest"}
+kotest-assertions-core = {group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest"}
+kotest-property = {group = "io.kotest", name = "kotest-property", version.ref = "kotest"}
+kotest-framework-datatest = {group = "io.kotest", name = "kotest-framework-datatest", version.ref = "kotest"}
+
+
+[plugins]
+jreleaser = { id = "org.jreleaser", version = "1.18.0" }
+benmanes-versions = {id = "com.github.ben-manes.versions", version = "0.52.0"}

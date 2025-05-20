@@ -1,10 +1,11 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-@Test
-class Issue169Test {
+
+class Issue169Test : FunSpec({
 
     data class Person(val id: Int,
                       val name: String,
@@ -12,10 +13,10 @@ class Issue169Test {
                       val city: String = "Paris"
                      )
 
-    private val expected = Person(id = 2,
+    val expected = Person(id = 2,
                                   name = "Arthur")
 
-    fun issue169() {
+    test("issue169") {
 
         // language=JSON
         val jsonToTest = """
@@ -27,9 +28,7 @@ class Issue169Test {
 
         val toTest = Klaxon().parse<Person>(jsonToTest)!!
 
-        assertThat(toTest.city)
-                .isNotNull()
-        assertThat(toTest)
-                .isEqualTo(expected)
+        toTest.city.shouldNotBeNull()
+        toTest shouldBe expected
     }
-}
+})

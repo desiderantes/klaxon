@@ -27,12 +27,12 @@ by map {
             }
 
             if (prettyPrint && !canonical) {
-                result.appendln()
+                result.appendLine()
                 indent(result, level + 1)
             }
 
             // Do not remove k::toString, it allows any data type (that needs to be casted to a string before), without crashing
-            result.append(Render.renderString(k.toString())).append(":")
+            result.append(Render.renderString(k)).append(":")
             if (prettyPrint && !canonical) {
                 result.append(" ")
             }
@@ -41,7 +41,7 @@ by map {
         }
 
         if (prettyPrint && !canonical && map.isNotEmpty()) {
-            result.appendln()
+            result.appendLine()
             indent(result, level)
         }
 

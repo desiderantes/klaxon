@@ -1,14 +1,14 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.string.shouldContain
 import java.time.Instant
 
-class Issue84Test {
+class Issue84Test : FunSpec({
     /**
      * This test passes.
      */
-    @Test
-    fun serializeNestedInstant() {
+    test("serializeNestedInstant") {
         data class Person(val firstName: String, val dob: Instant)
 
         class EpochMilliInstantConverter: Converter {
@@ -23,11 +23,11 @@ class Issue84Test {
 
         // Custom converter, expect the converted value
         val mapper = Klaxon().converter(EpochMilliInstantConverter())
-        Asserts.assertContains(mapper.toJsonString(obj), "9001")
+        val result2 = mapper.toJsonString(obj)
+        result2 shouldContain "9001"
     }
 
-    @Test
-    fun serializeListOfInstants() {
+    test("serializeListOfInstants") {
         val dates = listOf(Instant.ofEpochMilli(9001))
 
         class EpochMilliInstantConverter: Converter{
@@ -39,6 +39,6 @@ class Issue84Test {
         // despite custom converter being provided, instant is not serialized.  Empty value in list
         val mapper = Klaxon().converter(EpochMilliInstantConverter())
         val result = mapper.toJsonString(dates)
-        Asserts.assertContains(result, "9001")
+        result shouldContain "9001"
     }
-}
+})

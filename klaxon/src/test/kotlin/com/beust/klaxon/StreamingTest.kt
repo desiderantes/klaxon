@@ -1,29 +1,24 @@
 package com.beust.klaxon
 
-//import com.google.gson.stream.JsonReader
-import org.testng.Assert
-import org.testng.annotations.DataProvider
-import org.testng.annotations.Test
+import io.kotest.assertions.throwables.shouldNotThrow
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
 import java.io.StringReader
 import java.math.BigInteger
 
 
-@Test
-class StreamingTest {
-//    data class Person2(var name: String? = null, var age: Int? = null, var flag: Boolean? = false,
-//            var array: List<Int> = emptyList())
-//    fun streaming1() {
-//        val jr = JsonReader(StringReader(array))
-//    }
+class StreamingTest : FunSpec({
 
-    fun streamingObject() {
+    test("streamingObject") {
         val objectString = """{
              "name": "Joe", "age": 23, "height": 1.85, "flag": true, "array": [1, 3],
              "obj1": { "a":1, "b":2 }
         }"""
 
         JsonReader(StringReader(objectString)).use { reader ->
-            reader.beginObject() {
+            reader.beginObject {
                 var name: String? = null
                 var age: Int? = null
                 var height: Double? = null
@@ -36,22 +31,24 @@ class StreamingTest {
                 }
                 while (reader.hasNext()) {
                     val readName = reader.nextName()
-                    when (readName) {
-                        "name" -> name = reader.nextString()
-                        "age" -> age = reader.nextInt()
-                        "height" -> height = reader.nextDouble()
-                        "flag" -> flag = reader.nextBoolean()
-                        "array" -> array = reader.nextArray()
-                        "obj1" -> obj1 = reader.nextObject()
-                        else -> Assert.fail("Expected either \"name\" or \"age\" but got $name")
+                    shouldNotThrow<Exception> {
+                        when (readName) {
+                            "name" -> name = reader.nextString()
+                            "age" -> age = reader.nextInt()
+                            "height" -> height = reader.nextDouble()
+                            "flag" -> flag = reader.nextBoolean()
+                            "array" -> array = reader.nextArray()
+                            "obj1" -> obj1 = reader.nextObject()
+                            else -> throw IllegalArgumentException("Expected either \"name\" or \"age\" but got $name")
+                        }
                     }
                 }
-                Assert.assertEquals(name, "Joe")
-                Assert.assertEquals(age, 23)
-                Assert.assertEquals(height, 1.85)
-                Assert.assertTrue(flag!!)
-                Assert.assertEquals(array, listOf(1, 3))
-                Assert.assertEquals(obj1, expectedObj1)
+                name shouldBe "Joe"
+                age shouldBe 23
+                height shouldBe 1.85
+                flag shouldBe true
+                array shouldContainExactly listOf(1, 3)
+                obj1 shouldBe expectedObj1
             }
 
         }
@@ -62,8 +59,7 @@ class StreamingTest {
             { "name": "Joe", "age": 23 },
             { "name": "Jill", "age": 35 }
         ]"""
-
-    fun streamingArray() {
+    test("streamingArray") {
         val klaxon = Klaxon()
         JsonReader(StringReader(array)).use { reader ->
             val result = arrayListOf<Person1>()
@@ -72,14 +68,14 @@ class StreamingTest {
                     val person = klaxon.parse<Person1>(reader)
                     result.add(person!!)
                 }
-                Assert.assertEquals(result, listOf(Person1("Joe", 23), Person1("Jill", 35)))
+                result shouldBe listOf(Person1("Joe", 23), Person1("Jill", 35))
             }
         }
     }
 
     data class Address(val street: String)
     data class Person2(val name: String, val address:Address)
-    fun nestedObjects() {
+    test("nestedObjects") {
         val objectString = """[
             { "name": "Joe", "address": { "street": "Klaxon Road" }}
         ]""".trimIndent()
@@ -93,7 +89,7 @@ class StreamingTest {
                     result.add(person!!)
                 }
             }
-            Assert.assertEquals(result.get(0), Person2("Joe", Address("Klaxon Road")))
+            result[0] shouldBe  Person2("Joe", Address("Klaxon Road"))
         }
     }
 
@@ -102,208 +98,205 @@ class StreamingTest {
             { "name": "Jill", "age": 35 }
         ] }"""
 
-    fun streamingArrayInObject() {
+    test("streamingArrayInObject") {
         val klaxon = Klaxon()
         JsonReader(StringReader(arrayInObject)).use { reader ->
             val result = arrayListOf<Person1>()
             reader.beginObject {
                 val name = reader.nextName()
-                Assert.assertEquals(name, "array")
+                name shouldBe "array"
+
                 reader.beginArray {
                     while (reader.hasNext()) {
                         val person = klaxon.parse<Person1>(reader)
                         result.add(person!!)
                     }
-                    Assert.assertEquals(result, listOf(Person1("Joe", 23), Person1("Jill", 35)))
+
+                    result shouldBe  listOf(Person1("Joe", 23), Person1("Jill", 35))
                 }
             }
         }
     }
 
-    fun testNextString() {
-        // String read normally
-        JsonReader(StringReader("[\"text\"]")).use { reader ->
-            val actual = reader.beginArray { reader.nextString() }
-            Assert.assertEquals(actual, "text")
-        }
-    }
 
-    @DataProvider(name="invalid-strings")
-    fun createinvalidStringData() = arrayOf(
-            arrayOf("[null]"), // null
-            arrayOf("[true]"), // Boolean
-            arrayOf("[123]"), // Int
-            arrayOf("[9223372036854775807]"), // Long
-            arrayOf("[0.123]") // Double
-    )
 
-    @Test(dataProvider = "invalid-strings")
-    fun testNextStringInvalidInput(nonStringValue : String) {
-        assertParsingExceptionFromArray(nonStringValue) { reader ->
-            reader.nextString()
-        }
-    }
-
-    fun testNextInt() {
-        // Int read normally
-        JsonReader(StringReader("[0]")).use { reader ->
-            val actual = reader.beginArray { reader.nextInt() }
-            Assert.assertEquals(actual, 0)
-        }
-    }
-
-    @DataProvider(name="invalid-ints")
-    fun createinvalidIntData() = arrayOf(
-            arrayOf("[null]"), // null
-            arrayOf("[true]"), // Boolean
-            arrayOf("[\"123\"]"), // String
-            arrayOf("[9223372036854775807]"), // Long
-            arrayOf("[0.123]") // Double
-    )
-
-    @Test(dataProvider = "invalid-ints")
-    fun testNextIntInvalidInput(nonIntValue : String) {
-        assertParsingExceptionFromArray(nonIntValue) { reader ->
-            reader.nextInt()
-        }
-    }
-
-    fun testNextLong() {
-        // Integer values should be auto-converted
-        JsonReader(StringReader("[0]")).use { reader ->
-            val actual = reader.beginArray { reader.nextLong() }
-            Assert.assertEquals(actual, 0L)
-        }
-
-        // Long read normally
-        JsonReader(StringReader("[9223372036854775807]")).use { reader ->
-            val actual = reader.beginArray { reader.nextLong() }
-            Assert.assertEquals(actual, Long.MAX_VALUE)
-        }
-    }
-
-    @DataProvider(name="invalid-longs")
-    fun createinvalidLongData() = arrayOf(
-            arrayOf("[null]"), // null
-            arrayOf("[true]"), // Boolean
-            arrayOf("[\"123\"]"), // String
-            arrayOf("[0.123]") // Double
-    )
-
-    @Test(dataProvider = "invalid-longs")
-    fun testNextLongInvalidInput(nonLongValue : String) {
-        assertParsingExceptionFromArray(nonLongValue) { reader ->
-            reader.nextLong()
-        }
-    }
-
-    fun testNextBigInteger() {
-        // Integer values should be auto-converted
-        JsonReader(StringReader("[0]")).use { reader ->
-            val actual = reader.beginArray { reader.nextBigInteger() }
-            Assert.assertEquals(actual, BigInteger.valueOf(0))
-        }
-
-        // Long values should be auto-converted
-        JsonReader(StringReader("[9223372036854775807]")).use { reader ->
-            val actual = reader.beginArray { reader.nextBigInteger() }
-            Assert.assertEquals(actual, BigInteger.valueOf(Long.MAX_VALUE))
-        }
-
-        // Long read normally
-        JsonReader(StringReader("[9223372036854775808]")).use { reader ->
-            val actual = reader.beginArray { reader.nextBigInteger() }
-            Assert.assertEquals(actual, BigInteger.valueOf(Long.MAX_VALUE) + BigInteger.valueOf(1))
-        }
-    }
-
-    @DataProvider(name="invalid-biginteger")
-    fun createinvalidBigIntegerData() = arrayOf(
-            arrayOf("[null]"), // null
-            arrayOf("[true]"), // Boolean
-            arrayOf("[\"123\"]"), // String
-            arrayOf("[0.123]") // Double
-    )
-
-    @Test(dataProvider = "invalid-biginteger")
-    fun testNextBigIntegerInvalidInput(nonBigIntegerValue : String) {
-        assertParsingExceptionFromArray(nonBigIntegerValue) { reader ->
-            reader.nextBigInteger()
-        }
-    }
-
-    fun testNextDouble() {
-        // Integer values should be auto-converted
-        JsonReader(StringReader("[0]")).use { reader ->
-            val actual = reader.beginArray { reader.nextDouble() }
-            Assert.assertEquals(actual, 0.0)
-        }
-
-        // Native doubles
-        JsonReader(StringReader("[0.123]")).use { reader ->
-            val actual = reader.beginArray { reader.nextDouble() }
-            Assert.assertEquals(actual, 0.123)
-        }
-    }
-
-    @DataProvider(name="invalid-doubles")
-    fun createinvalidDoubleData() = arrayOf(
-            arrayOf("[null]"), // null
-            arrayOf("[true]"), // Boolean
-            arrayOf("[\"123\"]"), // String
-            arrayOf("[\"NAN\"]"), // NAN is not really specified
-            arrayOf("[9223372036854775807]") // Long
-    )
-
-    @Test(dataProvider = "invalid-doubles")
-    fun testNextDoubleInvalidInput(nonDoubleValue : String) {
-        assertParsingExceptionFromArray(nonDoubleValue) { reader ->
-            reader.nextDouble()
-        }
-    }
-
-    fun testNextBoolean() {
-        // true read normally
-        JsonReader(StringReader("[true]")).use { reader ->
-            val actual = reader.beginArray { reader.nextBoolean() }
-            Assert.assertEquals(actual, true)
-        }
-
-        // false read normally
-        JsonReader(StringReader("[false]")).use { reader ->
-            val actual = reader.beginArray { reader.nextBoolean() }
-            Assert.assertEquals(actual, false)
-        }
-    }
-
-    @DataProvider(name="invalid-booleans")
-    fun createinvalidBooleanData() = arrayOf(
-            arrayOf("[null]"), // null
-            arrayOf("[\"123\"]"), // String
-            arrayOf("[\"true\"]"), // true as a String
-            arrayOf("[\"false\"]"), // false as a String
-            arrayOf("[123]"), // Int
-            arrayOf("[9223372036854775807]"), // Long
-            arrayOf("[0.123]") // Double
-    )
-
-    @Test(dataProvider = "invalid-booleans")
-    fun testNextBooleanInvalidInput(nonBooleanValue : String) {
-        assertParsingExceptionFromArray(nonBooleanValue) { reader ->
-            reader.nextBoolean()
-        }
-    }
-
-    private fun assertParsingExceptionFromArray(json: String, nextValue: (JsonReader) -> Unit) {
+    fun assertParsingExceptionFromArray(json: String, nextValue: (JsonReader) -> Unit) {
         JsonReader(StringReader(json)).use { reader ->
             reader.beginArray {
-                Assert.assertThrows(JsonParsingException::class.java) {
+                shouldThrow <JsonParsingException> {
                     nextValue(reader)
                 }
             }
         }
 
     }
+
+    test("testNextString") {
+        // String read normally
+        JsonReader(StringReader("[\"text\"]")).use { reader ->
+            val actual = reader.beginArray { reader.nextString() }
+            actual shouldBe "text"
+        }
+    }
+
+    listOf(
+        "[null]", // null
+        "[true]", // Boolean
+        "[123]", // Int
+        "[9223372036854775807]", // Long
+        "[0.123]", // Double
+    ).forEach {
+        test("testStringInvalidInput (nonStringValue: $it)") {
+            assertParsingExceptionFromArray(it) { reader ->
+                reader.nextString()
+            }
+        }
+    }
+
+    test("testNextInt") {
+        // Int read normally
+        JsonReader(StringReader("[0]")).use { reader ->
+            val actual = reader.beginArray { reader.nextInt() }
+            actual shouldBe 0
+        }
+    }
+
+
+    listOf(
+        "[null]", // null
+        "[true]", // Boolean
+        "[\"123\"]", // String
+        "[9223372036854775807]", // Long
+        "[0.123]", // Double
+    ).forEach {
+        test("testIntInvalidInput (nonIntValue: $it)") {
+            assertParsingExceptionFromArray(it) { reader ->
+                reader.nextInt()
+            }
+        }
+    }
+
+    test("estNextLong") {
+        // Integer values should be auto-converted
+        JsonReader(StringReader("[0]")).use { reader ->
+            val actual = reader.beginArray { reader.nextLong() }
+            actual shouldBe 0L
+        }
+
+        // Long read normally
+        JsonReader(StringReader("[9223372036854775807]")).use { reader ->
+            val actual = reader.beginArray { reader.nextLong() }
+            actual shouldBe Long.MAX_VALUE
+        }
+    }
+
+    listOf(
+        "[null]", // null
+        "[true]", // Boolean
+        "[\"123\"]", // String
+        "[0.123]", // Double
+    ).forEach {
+        test("testLongInvalidInput (nonLongValue: $it)") {
+            assertParsingExceptionFromArray(it) { reader ->
+                reader.nextLong()
+            }
+        }
+    }
+
+    test("testNextBigInteger") {
+        // Integer values should be auto-converted
+        JsonReader(StringReader("[0]")).use { reader ->
+            val actual = reader.beginArray { reader.nextBigInteger() }
+            actual shouldBe BigInteger.valueOf(0)
+        }
+
+        // Long values should be auto-converted
+        JsonReader(StringReader("[9223372036854775807]")).use { reader ->
+            val actual = reader.beginArray { reader.nextBigInteger() }
+
+            actual shouldBe BigInteger.valueOf(Long.MAX_VALUE)
+        }
+
+        // Long read normally
+        JsonReader(StringReader("[9223372036854775808]")).use { reader ->
+            val actual = reader.beginArray { reader.nextBigInteger() }
+            actual shouldBe BigInteger.valueOf(Long.MAX_VALUE) + BigInteger.valueOf(1)
+        }
+    }
+
+
+    listOf(
+        "[null]", // null
+        "[true]", // Boolean
+        "[\"123\"]", // String
+        "[0.123]", // Double
+    ).forEach {
+        test("testBigIntegerInvalidInput (nonBigIntegerValue: $it)") {
+            assertParsingExceptionFromArray(it) { reader ->
+                reader.nextBigInteger()
+            }
+        }
+    }
+
+
+    test("testNextDouble") {
+        // Integer values should be auto-converted
+        JsonReader(StringReader("[0]")).use { reader ->
+            val actual = reader.beginArray { reader.nextDouble() }
+            actual shouldBe 0.0
+        }
+
+        // Native doubles
+        JsonReader(StringReader("[0.123]")).use { reader ->
+            val actual = reader.beginArray { reader.nextDouble() }
+            actual shouldBe 0.123
+        }
+    }
+
+    listOf(
+        "[null]", // null
+        "[true]", // Boolean
+        "[\"123\"]", // String
+        "[\"NAN\"]", // NAN is not really specified
+        "[9223372036854775807]", // Long
+    ).forEach {
+        test("testDoubleInvalidInput (nonDoubleValue: $it)") {
+            assertParsingExceptionFromArray(it) { reader ->
+                reader.nextDouble()
+            }
+        }
+    }
+
+    test("testNextBoolean") {
+        // true read normally
+        JsonReader(StringReader("[true]")).use { reader ->
+            val actual = reader.beginArray { reader.nextBoolean() }
+            actual shouldBe true
+        }
+
+        // false read normally
+        JsonReader(StringReader("[false]")).use { reader ->
+            val actual = reader.beginArray { reader.nextBoolean() }
+            actual shouldBe false
+        }
+    }
+
+    listOf(
+        "[null]", // null
+        "[\"123\"]", // String
+        "[\"true\"]", // true as a String
+        "[\"false\"]", // false as a String
+        "[123]", // Int
+        "[9223372036854775807]", // Long
+        "[0.123]", // Double
+    ).forEach {
+        test("testBooleanInvalidInput (nonBooleanValue: $it)") {
+            assertParsingExceptionFromArray(it) { reader ->
+                reader.nextBoolean()
+            }
+        }
+    }
+
 
 //    fun streaming1() {
 //        val reader = JsonReader(StringReader(array))//FileReader("src/test/resources/generated.json"))
@@ -316,4 +309,4 @@ class StreamingTest {
 //        }
 //        reader.endArray()
 //    }
-}
+})

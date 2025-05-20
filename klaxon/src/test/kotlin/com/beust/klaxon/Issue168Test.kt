@@ -1,9 +1,9 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
 
-@Test
-class Issue168Test {
+
+class Issue168Test : FunSpec({
     val jsonString = """
     {
         "data": [
@@ -17,9 +17,9 @@ class Issue168Test {
         val data: List<List<String?>>
     )
 
-    fun issue168() {
+    test("issue168") {
         val klaxon = Klaxon()
 
         val parsed = klaxon.parse<Data>(jsonString)
     }
-}
+})

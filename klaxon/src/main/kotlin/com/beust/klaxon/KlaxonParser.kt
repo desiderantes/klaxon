@@ -49,7 +49,7 @@ internal class KlaxonParser(
     }
 
     /**
-     * A loop that only ends on EOF (used in non streaming mode).
+     * A loop that only ends on EOF (used in non-streaming mode).
      */
     private fun fullParseLoop(sm: StateMachine, reader: Reader): Any {
         val lexer = passedLexer ?: Lexer(reader)

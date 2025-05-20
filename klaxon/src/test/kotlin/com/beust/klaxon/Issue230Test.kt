@@ -1,11 +1,13 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions
-import org.testng.annotations.Test
+
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import kotlin.reflect.KClass
 
-@Test
-class Issue230Test {
+
+class Issue230Test : FunSpec() {
     enum class Setting {
         MonitoringTime,
         Threshold,
@@ -26,15 +28,19 @@ class Issue230Test {
         }
     }
 
-    fun issue230() {
-        val json = """
+    init {
+
+        test("issue230") {
+            val json = """
         {
             "threshold": { "type": "Threshold", "value":0.4 },
             "monitoringTime" : {"type": "MonitoringTime", "value":4}
         }"""
 
-        val r = Klaxon().parse<Data>(json)
-        Assertions.assertThat(r!!.threshold.value).isEqualTo(0.4)
-        Assertions.assertThat(r.monitoringTime.value).isEqualTo(4)
+            val r = Klaxon().parse<Data>(json)
+            r.shouldNotBeNull()
+            r.threshold.value shouldBe 0.4
+            r.monitoringTime.value shouldBe 4
+        }
     }
 }

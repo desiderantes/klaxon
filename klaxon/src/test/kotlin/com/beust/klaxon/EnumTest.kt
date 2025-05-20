@@ -1,10 +1,11 @@
 package com.beust.klaxon
 
-import org.testng.Assert
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-@Test
-class EnumTest {
+
+class EnumTest : AnnotationSpec(){
 
     val convertColor = object: Converter {
         override fun canConvert(cls: Class<*>) = cls == Color::class.java
@@ -13,7 +14,6 @@ class EnumTest {
             Color.R -> "red"
             Color.G -> "green"
             Color.B -> "blue"
-            else -> throw IllegalArgumentException("Unknown color")
         }
 
         override fun fromJson(jv: JsonValue): Color = when(jv.inside) {
@@ -27,6 +27,7 @@ class EnumTest {
     enum class Color { R, G, B }
     data class Root (val colors: List<Color>)
 
+    @Test
     fun listOfEnums() {
         val klaxon = Klaxon().converter(convertColor)
         val result = klaxon.parse<Root>("""
@@ -38,12 +39,14 @@ class EnumTest {
 
     enum class Cardinal { NORTH, SOUTH }
     class Direction(var cardinal: Cardinal? = null)
+    @Test
     fun enum() {
         val result = Klaxon().parse<Direction>("""
             { "cardinal": "NORTH" }
         """
         )
-        Assert.assertEquals(result?.cardinal, Cardinal.NORTH)
+        result.shouldNotBeNull()
+        result.cardinal shouldBe Cardinal.NORTH
     }
 
 

@@ -1,98 +1,49 @@
-@file:Suppress("MayBeConstant")
-
-object This {
-    val version = KLAXON_VERSION
-    val groupId = "com.beust"
-    val artifactId = "klaxon"
-    val description = "A JSON parsing library"
-    val url = "https://github.com/cbeust/klaxon"
-    val scm = "github.com/cbeust/klaxon.git"
-
-    // Should not need to change anything below
-    val issueManagementUrl = "https://$scm/issues"
-    val isSnapshot = version.contains("SNAPSHOT")
-}
-
-allprojects {
-    group = This.groupId
-    version = This.version
-    apply<MavenPublishPlugin>()
-}
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     `maven-publish`
     signing
-    id("com.jfrog.bintray") version "1.8.3" // Don't use 1.8.4, crash when publishing
     kotlin("jvm")
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+kotlin {
+    compilerOptions {
+        languageVersion.set(libs.versions.kotlin.map { it.substringBeforeLast(".") }.map (KotlinVersion::fromVersion))
+    }
+    jvmToolchain {
+        languageVersion.set(libs.versions.java.map (JavaLanguageVersion::of))
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
 dependencies {
-    listOf("test").forEach {
-        testImplementation(kotlin(it))
-    }
-    listOf("org.testng:testng:7.0.0", "org.assertj:assertj-core:3.10.0").forEach {
-        testImplementation(it)
-    }
-
-    listOf("stdlib", "reflect").forEach {
-        implementation(kotlin(it))
-    }
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlin.reflect)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.kotest.framework.datatest)
 }
 
-//
-// Releases:
-// ./gradlew bintrayUpload (to JCenter)
-// ./gradlew publish (to Sonatype, then go to https://oss.sonatype.org/index.html#stagingRepositories to publish)
-//
-
-bintray {
-    user = project.findProperty("bintrayUser")?.toString() ?: System.getenv("BINTRAY_USER")
-    key = project.findProperty("bintrayApiKey")?.toString() ?: System.getenv("BINTRAY_API_KEY")
-    dryRun = false
-    publish = false
-
-    setPublications("custom")
-
-    with(pkg) {
-        repo = "maven"
-        name = This.artifactId
-        with(version) {
-            name = This.version
-            desc = This.description
-            with(gpg) {
-                sign = true
-            }
-        }
-    }
-}
-
-val sourcesJar by tasks.creating(Jar::class) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = "Assembles sources JAR"
-    archiveClassifier.set("sources")
-    from(sourceSets.getByName("main").allSource)
-}
-
-val javadocJar by tasks.creating(Jar::class) {
-    from(tasks.javadoc)
-    archiveClassifier.set("javadoc")
-}
 
 with(publishing) {
     publications {
-        create<MavenPublication>("custom") {
-            groupId = This.groupId
-            artifactId = This.artifactId
+        register<MavenPublication>("custom") {
+            groupId = KlaxonConfig.groupId
+            artifactId = KlaxonConfig.artifactId
             version = project.version.toString()
-            afterEvaluate {
-                from(components["java"])
-            }
-            artifact(sourcesJar)
-            artifact(javadocJar)
             pom {
-                name.set(This.artifactId)
-                description.set(This.description)
-                url.set(This.url)
+                name.set(KlaxonConfig.artifactId)
+                description.set(KlaxonConfig.description)
+                url.set(KlaxonConfig.url)
                 licenses {
                     license {
                         name.set("Apache License, Version 2.0")
@@ -101,18 +52,22 @@ with(publishing) {
                 }
                 issueManagement {
                     system.set("Github")
-                    url.set(This.issueManagementUrl)
+                    url.set(KlaxonConfig.issueManagementUrl)
                 }
                 developers {
-                    developer {
-                        id.set("cbeust")
-                        name.set("Cedric Beust")
-                        email.set("cedric@beust.com")
+
+                    KlaxonConfig.developers.forEach { developer ->
+                        developer {
+                            id.set(developer.id)
+                            name.set(developer.name)
+                            email.set(developer.email)
+                            roles.set(listOf(developer.role))
+                        }
                     }
                 }
                 scm {
-                    connection.set("scm:git:git://${This.scm}.git")
-                    url.set("https://${This.scm}")
+                    connection.set("scm:git:git://${KlaxonConfig.scm}.git")
+                    url.set("https://${KlaxonConfig.scm}")
                 }
             }
         }
@@ -122,7 +77,7 @@ with(publishing) {
         mavenLocal()
         maven {
             name = "sonatype"
-            url = if (This.isSnapshot)
+            url = if (KlaxonConfig.isSnapshot)
                 uri("https://oss.sonatype.org/content/repositories/snapshots/") else
                 uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
@@ -137,31 +92,3 @@ with(publishing) {
     }
 }
 
-tasks.register("publishSnapshotOnly") {
-    if (This.isSnapshot) {
-        doFirst {
-            println("Publishing snapshot ${This.version}")
-        }
-        dependsOn("publish")
-    } else {
-        println("Not a snapshot, not publishing anything")
-    }
-}
-
-// Sign with ./gradlew signCustomPublication
-with(signing) {
-    sign(publishing.publications.getByName("custom"))
-}
-
-tasks.test {
-    useTestNG() {
-//        suites("src/test/resources/testng.xml")
-    }
-}
-
-tasks["publish"].doLast {
-    if (! This.isSnapshot) {
-        println("Now go to https://oss.sonatype.org/index.html#stagingRepositories to close" +
-                " and publish the distribution")
-    }
-}

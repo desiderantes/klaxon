@@ -1,13 +1,13 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-@Test
-class Issue216Test {
-    fun issue216() {
+
+class Issue216Test : FunSpec({
+    test("issue216") {
         val m = mapOf("x" to "y", "n" to null)
         val result = Klaxon().toJsonString(m)
-        assertThat(result).isEqualTo("""{"x": "y", "n": null}""")
+        result shouldBe """{"x": "y", "n": null}"""
     }
-}
+})

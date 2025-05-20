@@ -1,10 +1,10 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
-import kotlin.test.assertEquals
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-@Test
-class Issue237Test {
+
+class Issue237Test : FunSpec({
 
     data class PlainObject(
         val a: Int,
@@ -13,7 +13,7 @@ class Issue237Test {
         val c: Float
     )
 
-    fun issue237() {
+    test("issue237") {
         val aPlainObject = PlainObject(10, "test string", 3.141659f)
 
         val aJsonArray = JsonArray(listOf(
@@ -29,10 +29,7 @@ class Issue237Test {
             )
         }
 
-        assertEquals(
-            "{\"theArray\": [{\"testing\": \"Json\"}, {\"Array\": \"Objects\"}, {\"a\" : 10, \"filed_b\" : \"test string\", \"c\" : 3.141659}], \"secondArray\": [\"testing\", \"JsonArray\", \"Objects\", \"again\"]}",
-            Klaxon().toJsonString(aMix),
-            "DefaultConverter failed to serialize a JsonArray within a Map."
-        )
+        val str = Klaxon().toJsonString(aMix)
+        str shouldBe "{\"theArray\": [{\"testing\": \"Json\"}, {\"Array\": \"Objects\"}, {\"a\" : 10, \"filed_b\" : \"test string\", \"c\" : 3.141659}], \"secondArray\": [\"testing\", \"JsonArray\", \"Objects\", \"again\"]}"
     }
-}
+})

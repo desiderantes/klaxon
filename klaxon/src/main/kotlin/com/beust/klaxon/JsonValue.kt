@@ -167,7 +167,7 @@ class JsonValue constructor(value: Any?,
             double != null -> "{double: $double"
             char != null -> "{char: $char"
             boolean != null -> "{boolean: $boolean"
-            longValue != null -> "{longBalue: $longValue"
+            longValue != null -> "{longValue: $longValue"
             else -> throw KlaxonException("Should never happen")
         }
         return "$result, property: $propertyKClass}"

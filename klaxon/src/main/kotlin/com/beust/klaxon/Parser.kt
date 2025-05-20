@@ -32,21 +32,6 @@ interface Parser {
      */
     companion object {
 
-        @Deprecated(
-            message = "Please use a factory method to create the Parser.",
-            replaceWith = ReplaceWith(expression = "default(pathMatchers, passedLexer, streaming)")
-        )
-        operator fun invoke(
-            pathMatchers: List<PathMatcher> = emptyList(),
-            passedLexer: Lexer? = null,
-            streaming: Boolean = false
-        ): Parser =
-            KlaxonParser(
-                pathMatchers,
-                passedLexer,
-                streaming
-            )
-
         /**
          * Main entry for Klaxon's parser.
          *

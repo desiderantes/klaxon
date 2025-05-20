@@ -1,11 +1,15 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.throwable.shouldHaveMessage
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.reflect.KClass
 
-@Test
-class TypeAdapterTest {
+
+class TypeAdapterTest : AnnotationSpec() {
     open class Shape
     data class Rectangle(val width: Int, val height: Int): Shape()
     data class Circle(val radius: Int): Shape()
@@ -34,11 +38,16 @@ class TypeAdapterTest {
         )
 
         val shapes = Klaxon().parseArray<Data>(json)
-        assertThat(shapes!![0].shape as Rectangle).isEqualTo(Rectangle(100, 50))
-        assertThat(shapes[1].shape as Circle).isEqualTo(Circle(20))
+        shapes.shouldNotBeNull()
+        val rect = shapes[0].shape
+        rect.shouldBeInstanceOf<Rectangle>()
+        rect shouldBe Rectangle(100, 50)
+        val circ = shapes[1].shape
+        circ.shouldBeInstanceOf<Circle>()
+        circ shouldBe Circle(20)
     }
 
-    @Test(expectedExceptions = [KlaxonException::class])
+    @Test(expected = KlaxonException::class)
     fun typoInFieldName() {
         class BogusData (
             @TypeFor(field = "___nonexistentField", adapter = ShapeTypeAdapter::class)
@@ -55,11 +64,8 @@ class TypeAdapterTest {
             else -> throw IllegalArgumentException("Unknown type: $type")
         }
     }
-    @Test(expectedExceptions = [IllegalArgumentException::class],
-            expectedExceptionsMessageRegExp = ".*Unknown type.*")
+    @Test
     fun unknownDiscriminantValue() {
-
-
         class BogusData (
                 @TypeFor(field = "shape", adapter = BogusShapeTypeAdapter::class)
                 val type: Integer,
@@ -67,7 +73,10 @@ class TypeAdapterTest {
                 val shape: Shape
         )
 
-        val shapes = Klaxon().parseArray<BogusData>(json)
+        val exception = shouldThrowExactly<IllegalArgumentException> {
+          Klaxon().parseArray<BogusData>(json)
+        }
+        exception shouldHaveMessage ".*Unknown type.*".toRegex()
     }
 
     class AnimalTypeAdapter: TypeAdapter<Animal> {
@@ -93,8 +102,9 @@ class TypeAdapterTest {
             ]
         """
         val r = Klaxon().parseArray<Animal>(json)
-        assertThat(r!![0]).isInstanceOf(Dog::class.java)
-        assertThat(r[1]).isInstanceOf(Cat::class.java)
+        r.shouldNotBeNull()
+        r[0].shouldBeInstanceOf<Dog>()
+        r[1].shouldBeInstanceOf<Cat>()
     }
 
 
@@ -128,10 +138,11 @@ class TypeAdapterTest {
             ]
         """
         val r = Klaxon().parseArray<Vehicle>(json)
+        r.shouldNotBeNull()
         println(r)
-        assertThat(r!![0]).isInstanceOf(Car::class.java)
-        assertThat(r[1]).isInstanceOf(Truck::class.java)
-        assertThat(r[2]).isInstanceOf(Car::class.java)
+        r[0].shouldBeInstanceOf<Car>()
+        r[1].shouldBeInstanceOf<Truck>()
+        r[2].shouldBeInstanceOf<Car>()
     }
 
 }

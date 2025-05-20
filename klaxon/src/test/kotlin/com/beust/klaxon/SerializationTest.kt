@@ -1,71 +1,62 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
-import kotlin.test.assertEquals
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-@Test
-class SerializationTest {
-    enum class Sause { ONION }
+enum class Sauce { ONION }
+
+class SerializationTest : FunSpec({
+
     val klaxon = Klaxon()
 
-    private fun serializationTest(expected: String, actual: Any) {
+    fun serializationTest(expected: String, actual: Any) {
         val actualSerialization = klaxon.toJsonString(actual)
-        assertEquals(expected, actualSerialization)
+        actualSerialization shouldBe expected
     }
 
-    @Test
-    fun int() {
+    test("int") {
         serializationTest("1", 1)
     }
-
-    @Test
-    fun float() {
+    test("float") {
         serializationTest("0.55", 0.55f)
     }
-
-    @Test
-    fun double() {
+    test("double") {
         serializationTest("0.332", 0.332)
     }
-
-    @Test
-    fun boolean() {
+    test("boolean") {
         serializationTest("true", true)
     }
-
-    @Test
-    fun long() {
+    test("char") {
+        serializationTest("\"a\"", 'a')
+    }
+    test("byte") {
+        serializationTest("1", 1.toByte())
+    }
+    test("short") {
+        serializationTest("1", 1.toShort())
+    }
+    test("long") {
         serializationTest("200100", 200100L)
     }
-
-    @Test
-    fun string() {
+    test("string") {
         serializationTest("\"Onion Sauce !\"", "Onion Sauce !")
     }
-
-    @Test
-    fun enum() {
-        serializationTest("\"ONION\"", Sause.ONION)
+    test("enum") {
+        serializationTest("\"ONION\"", Sauce.ONION)
     }
-
-    @Test
-    fun collection() {
+    test("collection") {
         val collection = listOf("mole", "ratty", "badger", "toad")
         serializationTest("[\"mole\", \"ratty\", \"badger\", \"toad\"]", collection)
     }
-
-    @Test
-    fun map() {
+    test("map") {
         val map = mapOf(1 to "uno", 2 to "dos", 3 to "tres")
         serializationTest("{\"1\": \"uno\", \"2\": \"dos\", \"3\": \"tres\"}", map)
     }
-
-    @Test
-    fun array() {
+    test("array") {
         val arrStrings = arrayOf("uno", "dos", "tres")
         serializationTest("[\"uno\", \"dos\", \"tres\"]", arrStrings)
 
         val arrPairs = arrayOf(Pair(1, "uno"), Pair(2, "dos"), Pair(3, "tres"))
         serializationTest("[{\"first\" : 1, \"second\" : \"uno\"}, {\"first\" : 2, \"second\" : \"dos\"}, {\"first\" : 3, \"second\" : \"tres\"}]", arrPairs)
     }
-}
+})

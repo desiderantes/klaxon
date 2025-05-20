@@ -1,13 +1,15 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.maps.shouldContainExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
 
-@Test
-class Issue215Test {
-    fun issue215() {
+
+class Issue215Test : FunSpec({
+    test("issue215") {
         val input = """{"hi" : "hello"}"""
         val map = Klaxon().parse<Map<String, String>>(input)
-        assertThat(map).isEqualTo(mapOf("hi" to "hello"))
+        map.shouldNotBeNull()
+        map shouldContainExactly mapOf("hi" to "hello")
     }
-}
+})

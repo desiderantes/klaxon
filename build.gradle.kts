@@ -1,58 +1,38 @@
 plugins {
     java
     `java-library`
-    kotlin("jvm") version KOTLIN_VERSION apply true
-}
-
-allprojects {
-    group = "org.gradle.kotlin.dsl.samples.multiproject"
-
-    version = "1.0"
-
-    repositories {
-        jcenter()
-    }
+    kotlin("jvm") version libs.versions.kotlin apply true
+    alias(libs.plugins.benmanes.versions)
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility =  libs.versions.java.map(JavaVersion::toVersion).get()
+    targetCompatibility = libs.versions.java.map(JavaVersion::toVersion).get()
+
+    toolchain {
+        languageVersion.set(libs.versions.java.map(JavaLanguageVersion::of))
+    }
 }
 
-repositories {
-    jcenter()
-    mavenCentral()
-    maven { setUrl("https://plugins.gradle.org/m2") }
-}
-
-val test by tasks.getting(Test::class) {
-    useTestNG()
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 dependencies {
-    listOf("stdlib", "reflect").forEach {
-        implementation(kotlin(it))
-    }
-    listOf("test").forEach {
-        testImplementation(kotlin(it))
-    }
-    listOf("org.testng:testng:7.0.0", "org.assertj:assertj-core:3.10.0").forEach {
-        testImplementation(it)
-    }
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlin.reflect)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.kotest.framework.datatest)
 
     listOf("klaxon", "klaxon-jackson").forEach {
         implementation(project(":$it", "default"))
     }
 }
 
-//
-//dependencies {
-//    // Make the root project archives configuration depend on every subproject
-//    subprojects.forEach {
-//        archives(it)
-//    }
-//}
-
 subprojects {
-    extra["signing.secretKeyRingFile"] = System.getProperty("user.home") + "/.gnupg/secring.gpg"
+    group = KlaxonConfig.groupId
+    version = KlaxonConfig.version
 }

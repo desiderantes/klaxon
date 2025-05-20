@@ -1,14 +1,14 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
-@Test
-class FieldRenamerTest {
-    fun stringTest() {
-        assertThat(FieldRenamer.camelToUnderscores("abcDefGhi")).isEqualTo("abc_def_ghi")
-        assertThat(FieldRenamer.underscoreToCamel("abc_def_ghi")).isEqualTo("abcDefGhi")
-    }
+
+class FieldRenamerTest : FunSpec(){
+
 
     val renamer = object: FieldRenamer {
         override fun toJson(fieldName: String) = FieldRenamer.camelToUnderscores(fieldName)
@@ -30,29 +30,42 @@ class FieldRenamerTest {
         return klaxon.parse<C>(json)
     }
 
-    @Test(expectedExceptions = [KlaxonException::class])
-    fun withoutRenamerFromJson() {
-        privateRenaming(false)
-    }
+    init {
+        test("stringTest") {
+            FieldRenamer.camelToUnderscores("abc").shouldBe("abc")
+            FieldRenamer.camelToUnderscores("abcDef").shouldBe("abc_def")
+            FieldRenamer.camelToUnderscores("abcDefGhi").shouldBe("abc_def_ghi")
+        }
+        test("withoutRenamerFromJson") {
+            shouldThrow<KlaxonException> { privateRenaming(false) }
 
-    fun withRenamerFromJson() {
-        val c = privateRenaming(true)
-        assertThat(c!!.someField).isEqualTo(42)
-    }
+        }
+        test("withRenamerFromJson") {
+            val c = privateRenaming(true)
+            c.shouldNotBeNull()
+            c.someField.shouldNotBeNull()
+            c.someField.shouldBe(42)
+        }
 
-    private fun privateRenamingToJson(useRenamer: Boolean): String {
-        val c = C(42)
-        val klaxon = Klaxon()
-        if (useRenamer) klaxon.fieldRenamer(renamer)
-        return klaxon.toJsonString(c)
-    }
 
-    fun withoutRenamerToJson() {
-        assertThat(privateRenamingToJson(false)).contains("someField")
-    }
+        fun privateRenamingToJson(useRenamer: Boolean): String {
+            val c = C(42)
+            val klaxon = Klaxon()
+            if (useRenamer) klaxon.fieldRenamer(renamer)
+            return klaxon.toJsonString(c)
+        }
 
-    fun withRenamerToJson() {
-        assertThat(privateRenamingToJson(true)).contains("some_field")
+        test("withoutRenamerToJson") {
+            val c = privateRenamingToJson(false)
+            c.shouldNotBeNull()
+            c shouldContain "someField"
+        }
+
+        test("withRenamerToJson") {
+            val c = privateRenamingToJson(true)
+            c.shouldNotBeNull()
+            c shouldContain "some_field"
+        }
     }
 }
 

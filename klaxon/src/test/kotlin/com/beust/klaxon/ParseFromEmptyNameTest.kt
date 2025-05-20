@@ -1,29 +1,31 @@
 package com.beust.klaxon
 
-import org.testng.Assert
-import org.testng.annotations.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-@Test
-class ParseFromEmptyNameTest {
 
-    fun nameSetToEmptyString() {
+class ParseFromEmptyNameTest : FunSpec({
+
+    test("nameSetToEmptyString") {
         data class EmptyName (
                 @Json(name = "")
                 val empty: String)
         val sampleJson = """{"":"value"}"""
         val result = Klaxon().parse<EmptyName>(sampleJson)
 
-        Assert.assertNotNull(result)
-        Assert.assertEquals(result!!.empty, "value")
+        result.shouldNotBeNull()
+        result.empty shouldBe "value"
     }
 
-    fun nameSetToDefaultValue() {
+    test("nameSetToDefaultValue") {
         data class SpecificName (
                 @Json(name = NAME_NOT_INITIALIZED)
                 val oddName: String)
         val sampleJson = """{"$NAME_NOT_INITIALIZED":"value"}"""
-        Assert.assertThrows(KlaxonException::class.java) {
+        shouldThrow<KlaxonException> {
             Klaxon().parse<SpecificName>(sampleJson)
         }
     }
-}
+})

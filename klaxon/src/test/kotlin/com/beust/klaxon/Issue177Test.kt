@@ -1,10 +1,12 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-@Test
-class Issue177Test {
+
+class Issue177Test : FunSpec({
 
     data class UserData(val id: Int,
                       val name: String,
@@ -12,9 +14,9 @@ class Issue177Test {
                       val additionalRole: String? = ""
                      )
 
-    private val expected = UserData(1, "Jason", "SuperUser", null)
+    val expected = UserData(1, "Jason", "SuperUser", null)
 
-    fun issue177() {
+    test("issue177") {
 
         // language=JSON
         val jsonToTest = """
@@ -28,12 +30,11 @@ class Issue177Test {
 
         val toTest = Klaxon().parse<UserData>(jsonToTest)
 
-        toTest?.let{
-            assertThat(toTest.additionalRole)
-                    .isNull()
-            assertThat(toTest)
-                    .isEqualTo(expected)
-        } ?: throw AssertionError("Expected object to be not null")
+        toTest.shouldNotBeNull()
+
+        toTest.additionalRole.shouldBeNull()
+
+        toTest shouldBe expected
 
     }
-}
+})

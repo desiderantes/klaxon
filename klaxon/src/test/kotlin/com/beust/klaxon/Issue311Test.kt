@@ -1,12 +1,11 @@
 
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
 
-@Test(description = "Serialing Enum values with their own anonymous classes")
-class Issue311Test {
+class Issue311Test : FunSpec() {
     enum class ProtocolState {
         WAITING {
             override fun signal() = TALKING
@@ -19,8 +18,11 @@ class Issue311Test {
 
     class Klass(val state: ProtocolState)
 
-    fun issue311() {
-        val klass = Klass(ProtocolState.WAITING)
-        assertThat(Klaxon().toJsonString(klass)).isEqualTo("""{"state" : "WAITING"}""")
+    init {
+        test("Issue 311: Serializing Enum values with their own anonymous classes") {
+            val klass = Klass(ProtocolState.WAITING)
+            val json = Klaxon().toJsonString(klass)
+            json shouldBe """{"state" : "WAITING"}"""
+        }
     }
 }

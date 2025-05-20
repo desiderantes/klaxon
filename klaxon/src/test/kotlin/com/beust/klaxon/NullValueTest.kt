@@ -1,12 +1,11 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-@Test
-class NullValueTest {
-    fun nullStrings() {
-        assertThat(Klaxon().toJsonString(listOf(1, 2, null, null, 3)))
-                .isEqualTo("[1, 2, null, null, 3]")
+
+class NullValueTest: FunSpec({
+    test("null String") {
+        Klaxon().toJsonString(listOf(1, 2, null, null, 3)) shouldBe "[1, 2, null, null, 3]"
     }
-}
+})

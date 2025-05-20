@@ -193,15 +193,15 @@ class Lexer(passedReader: Reader, val lenient: Boolean = false): Iterator<Token>
                 }
             } else if (DOUBLE.matcher(v).matches()) {
                 token = Value(java.lang.Double.parseDouble(v))
-            } else if ("true" == v.toLowerCase()) {
+            } else if ("true" == v.lowercase()) {
                 token = Value(true)
-            } else if ("false" == v.toLowerCase()) {
+            } else if ("false" == v.lowercase()) {
                 token = Value(false)
             } else if (v == "null") {
                 token = Value(null)
             } else {
                 throw KlaxonException("Unexpected character at position ${index-1}"
-                        + ": '$c' (ASCII: ${c.toInt()})'")
+                        + ": '$c' (ASCII: ${c.code})'")
             }
 
         } else {

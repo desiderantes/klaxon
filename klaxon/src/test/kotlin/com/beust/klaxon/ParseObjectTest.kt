@@ -1,14 +1,13 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
-import kotlin.test.assertEquals
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-@Test
-class ParseObjectTest {
 
-    object Foo
-
-    fun `test parsing an object`() {
-        assertEquals(Foo, Klaxon().parse<Foo>("{}"))
+class ParseObjectTest : FunSpec( {
+    test ("parsing an object") {
+        Klaxon().parse<Foo>("{}") shouldBe Foo
     }
+}) {
+    object Foo
 }

@@ -1,47 +1,53 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-class Issue207Test {
+
+class Issue207Test : FunSpec() {
     private val klaxon = Klaxon()
+
     interface Message {
         val text: String
     }
 
-    data class MessageReceived(val sender: String,
-            override val text: String) : Message
+    data class MessageReceived(
+        val sender: String, override val text: String
+    ) : Message
 
-    data class MessageToSend(val recipient: String,
-            override val text: String) : Message
-
+    data class MessageToSend(
+        val recipient: String, override val text: String
+    ) : Message
 
 
     data class Root(val id: Long, val message: Message)
 
-    @Test
-    fun testReceived() {
-        val jsonString = """
+    init {
+        test("testIssue297Received") {
+            val jsonString = """
         {
             "sender":"Alice",
             "text":"Hello"
         }
-    """.trimIndent()
-        val root = klaxon.parse<MessageReceived>(jsonString)
-        assertThat(root!!.sender).isEqualToIgnoringCase("Alice")
-        assertThat(root.text).isEqualTo("Hello")
-    }
+        """.trimIndent()
+            val root = klaxon.parse<MessageReceived>(jsonString)
+            root.shouldNotBeNull()
+            root.sender shouldBe "Alice"
+            root.text shouldBe "Hello"
+        }
 
-    @Test
-    fun testSending() {
-        val jsonString = """
+        test("testIssue297Sending") {
+            val jsonString = """
         {
             "recipient":"Bob",
             "text":"Hello"
         }
-    """.trimIndent()
-        val root = klaxon.parse<MessageToSend>(jsonString)
-        assertThat(root!!.recipient).isEqualToIgnoringCase("Bob")
-        assertThat(root.text).isEqualTo("Hello")
+        """.trimIndent()
+            val root = klaxon.parse<MessageToSend>(jsonString)
+            root.shouldNotBeNull()
+            root.recipient shouldBe "Bob"
+            root.text shouldBe "Hello"
+        }
     }
 }

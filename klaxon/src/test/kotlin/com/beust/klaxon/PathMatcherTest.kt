@@ -1,19 +1,18 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.Assert
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
 import java.io.StringReader
 import java.util.regex.Pattern
 
-@Test
-class PathMatcherTest {
+class PathMatcherTest : FunSpec({
 
     /**
      * Illustrate how we can create a Kotlin object made of fields scattered
      * inside the JSON document.
      */
-    fun scatteredObject() {
+    test("scatteredObject") {
         data class UserWithZipCode(val name: String, val zipCode: Int)
 
         val pm = object: PathMatcher {
@@ -46,10 +45,10 @@ class PathMatcherTest {
                 }
             }"""))
         val user = UserWithZipCode(pm.name!!, pm.zipCode!!)
-        assertThat(user).isEqualTo(UserWithZipCode("John", 90210))
+        user shouldBe UserWithZipCode("John", 90210)
     }
 
-    fun pathMatcher() {
+    test("pathMatcher") {
         val po = object : PathMatcher {
             override fun pathMatches(path: String) = Pattern.matches(".*store.book.*author.*", path)
 
@@ -98,8 +97,7 @@ class PathMatcherTest {
                 },
                 "expensive": 10
             }"""))
-        Assert.assertEquals(po.authors,
-                listOf("Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"))
+        po.authors shouldContainExactly listOf("Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien")
     }
 
     data class WithPath(
@@ -108,7 +106,7 @@ class PathMatcherTest {
         val name: String
     )
 
-    fun fieldWithPath() {
+    test("fieldWithPath") {
         val result = Klaxon()
             .parse<WithPath>(StringReader("""{
                 "id": 2,
@@ -116,23 +114,24 @@ class PathMatcherTest {
                    "name": "John"
                 }
             }"""))
-        assertThat(result).isEqualTo(WithPath(2, "John"))
+        result shouldBe WithPath(2, "John")
     }
 
-    data class Library(val titles: List<String>, val books: List<Book>, val people: List<Author>)
+    data class Author(
+        @Json(path = "$.people[0].authorName")
+        val authorName: String
+    )
 
     data class Book(
             @Json(path = "$.titles[1]")
             val title: String,
             val author: Author
     )
-    data class Author(
-            @Json(path = "$.people[0].authorName")
-            val authorName: String
-    )
 
-    @Test(enabled = false)
-    fun fieldWithNestedPath() {
+
+    data class Library(val titles: List<String>, val books: List<Book>, val people: List<Author>)
+
+    xtest("fieldWithNestedPath") {
         val k = Klaxon()
         val result = k
 //                .parseJsonObject(StringReader("""{
@@ -152,6 +151,6 @@ class PathMatcherTest {
                 ],
             }"""))
         println("Result: $result")
-//        assertThat(result).isEqualTo(Library(Book("Hyperion", Author("Simmons"))))
+//      result shouldBe Library(Book("Hyperion", Author("Simmons")))
     }
-}
+})

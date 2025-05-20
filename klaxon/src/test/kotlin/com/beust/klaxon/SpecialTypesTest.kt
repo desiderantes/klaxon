@@ -1,10 +1,13 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.maps.shouldContain
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-@Test
-class SpecialTypesTest {
+
+class SpecialTypesTest : FunSpec({
     class MyEntity(
         @Json(name = "foo", ignored = true)
         var myFoo : String = "abc",
@@ -13,7 +16,7 @@ class SpecialTypesTest {
         var myBar : String
     )
 
-    fun map() {
+    test("map") {
         val o = Klaxon().parse<Map<String, Any>>("""
             {
                "bar": "def"
@@ -22,10 +25,11 @@ class SpecialTypesTest {
                }
             }
         """)
-        assertThat(o!!.keys.size).isEqualTo(2)
-        assertThat(o["bar"]).isEqualTo("def")
-        assertThat((o["entity"] as JsonObject)["bar"]).isEqualTo("isBar")
+        o.shouldNotBeNull()
+        o.keys shouldHaveSize 2
+        o shouldContain ("bar" to "def")
+        (o["entity"] as JsonObject)["bar"] shouldBe "isBar"
     }
 
 
-}
+})

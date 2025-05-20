@@ -68,12 +68,12 @@ class World(var status : Status, val pathMatchers: List<PathMatcher> = emptyList
     }
 
     fun getFirstObject() : JsonObject {
-        return valueStack.first as JsonObject
+        return valueStack.first() as JsonObject
     }
 
     @Suppress("UNCHECKED_CAST")
     fun getFirstArray() : JsonArray<Any?> {
-        return valueStack.first as JsonArray<Any?>
+        return valueStack.first() as JsonArray<Any?>
     }
 
     fun peekStatus() : Status {

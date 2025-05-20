@@ -1,41 +1,49 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
 
-class JazzerTest {
-    @Test(expectedExceptions = [KlaxonException::class])
-    fun characterInNumericLiteral() {
+
+class JazzerTest : FunSpec ({
+    test("characterInNumericLiteral") {
         val json = "0r"
-        Parser.default().parse(StringBuilder(json))
+        shouldThrow<KlaxonException> {
+            Parser.default().parse(StringBuilder(json))
+        }
     }
 
-    @Test(expectedExceptions = [KlaxonException::class])
-    fun numericKeyAndObject() {
+    test("numericKeyAndObject") {
         val json = "{1{"
-        Parser.default().parse(StringBuilder(json))
+        shouldThrow<KlaxonException> {
+            Parser.default().parse(StringBuilder(json))
+        }
     }
 
-    @Test(expectedExceptions = [KlaxonException::class])
-    fun numericKeyAndArray() {
+    test("numericKeyAndArray") {
         val json = "{3["
-        Parser.default().parse(StringBuilder(json))
+        shouldThrow<KlaxonException> {
+            Parser.default().parse(StringBuilder(json))
+        }
     }
 
-    @Test(expectedExceptions = [KlaxonException::class])
-    fun numericKeyAndString() {
+    test("numericKeyAndString") {
         val json = "{0\"\""
-        Parser.default().parse(StringBuilder(json))
+        shouldThrow<KlaxonException> {
+            Parser.default().parse(StringBuilder(json))
+        }
     }
 
-    @Test(expectedExceptions = [KlaxonException::class])
-    fun incompleteUnicodeEscape() {
+    test("incompleteUnicodeEscape") {
         val json = "\"\\u"
-        Parser.default().parse(StringBuilder(json))
+        shouldThrow<KlaxonException> {
+            Parser.default().parse(StringBuilder(json))
+        }
     }
 
-    @Test(expectedExceptions = [KlaxonException::class])
-    fun nonNumericUnicodeEscape() {
+    test("nonNumericUnicodeEscape") {
         val json = "\"\\u\\\\{["
-        Parser.default().parse(StringBuilder(json))
+        shouldThrow<KlaxonException> {
+            Parser.default().parse(StringBuilder(json))
+        }
     }
-}
+})

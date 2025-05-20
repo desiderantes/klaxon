@@ -1,12 +1,12 @@
 package com.beust.klaxon;
 
-import org.testng.annotations.Test
+import io.kotest.assertions.fail
+import io.kotest.assertions.throwables.shouldThrowWithMessage
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.equals.shouldBeEqual
 import java.io.ByteArrayInputStream
-import kotlin.test.assertEquals
-import kotlin.test.fail
 
-@Test
-class TestRFC7159 {
+class TestRFC7159 : FunSpec(){
 
     private fun fromJsonString(jsonData: String) : Any? =
         Parser.default().parse(ByteArrayInputStream(jsonData.toByteArray(Charsets.UTF_8)))
@@ -15,8 +15,8 @@ class TestRFC7159 {
     private fun jsonEquals(testData: String, expectedData: String) {
         val j = fromJsonString(testData)
         when(j) {
-            is JsonObject -> assertEquals(expectedData, j.toJsonString())
-            is JsonArray<*> -> assertEquals(expectedData, j.toJsonString())
+            is JsonObject -> j.toJsonString() shouldBeEqual expectedData
+            is JsonArray<*> -> j.toJsonString() shouldBeEqual expectedData
             else -> fail("not an object or array")
         }
     }
@@ -97,13 +97,17 @@ class TestRFC7159 {
         jsonEquals("{ \"v\":${Double.MAX_VALUE}}", "{\"v\":${Double.MAX_VALUE}}")
     }
 
-    @Test(expectedExceptions = arrayOf(RuntimeException::class), expectedExceptionsMessageRegExp = "Unterminated string")
-    fun truncatedValue() {
-         fromJsonString("{\"X\":\"s")
-    }
+    init {
+        test("truncated value") {
+            shouldThrowWithMessage<RuntimeException>("Unterminated string") {
+                fromJsonString("{\"X\":\"s")
+            }
+        }
 
-    @Test(expectedExceptions = arrayOf(RuntimeException::class), expectedExceptionsMessageRegExp = "Unterminated string")
-    fun truncatedKey() {
-         fromJsonString("{\"X")
+        test("truncated key") {
+            shouldThrowWithMessage<RuntimeException>("Unterminated string") {
+                fromJsonString("{\"X")
+            }
+        }
     }
 }

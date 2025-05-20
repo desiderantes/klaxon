@@ -1,7 +1,9 @@
 package com.beust.klaxon.test
 
-import java.util.ArrayList
-import com.beust.klaxon.*
+import com.beust.klaxon.JsonArray
+import com.beust.klaxon.JsonObject
+import com.beust.klaxon.Parser
+import com.beust.klaxon.json
 
 fun main(args : Array<String>) {
 //    val a1 = json {

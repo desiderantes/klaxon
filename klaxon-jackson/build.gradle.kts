@@ -1,18 +1,26 @@
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-        maven { setUrl("https://plugins.gradle.org/m2") }
-    }
-}
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     java
-    kotlin("jvm")
+    kotlin("jvm") version libs.versions.kotlin
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+kotlin {
+    compilerOptions {
+        languageVersion.set(libs.versions.kotlin.map { it.substringBeforeLast(".") }.map (KotlinVersion::fromVersion))
+    }
+    jvmToolchain {
+        languageVersion.set(libs.versions.java.map (JavaLanguageVersion::of))
+    }
 }
 
 dependencies {
-    implementation(kotlin("stdlib"))
+    implementation(libs.kotlin.stdlib)
     implementation(project(":klaxon", "default"))
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.6")
+    implementation(libs.jackson.databind)
 }

@@ -52,7 +52,7 @@ class JsonObjectConverter(private val klaxon: Klaxon, private val allPaths: Hash
                 val allProperties = Annotations.findNonIgnoredProperties(kc, klaxon.propertyStrategies)
 
                 val pi = createPolymorphicInfo(typeFor, prop, allProperties)
-                calculatePolymorphicClass(pi, kc, jsonObject) ?: throw KlaxonException("Cant't find polymorphic class")
+                calculatePolymorphicClass(pi, kc, jsonObject) ?: throw KlaxonException("Can't find polymorphic class")
             }
             else -> {
                 kc
@@ -87,8 +87,8 @@ class JsonObjectConverter(private val klaxon: Klaxon, private val allPaths: Hash
                 // Easier than trying to make sure each parameter matches the parameter type. Still try to
                 // output a meaningful error message pointing out directly at the parameter(s) that are probably
                 // wrong using isAssignableFrom.
-                val expected = constructor.parameters.map { it.name!! to it.type }.toMap()
-                val actual = parameterMap.entries.map { it.key.name!! to parameterMap[it.key]}.toMap()
+                val expected = constructor.parameters.associate { it.name!! to it.type }
+                val actual = parameterMap.entries.associate { it.key.name!! to parameterMap[it.key] }
                 val errors = expected.keys.mapNotNull { name ->
                     val exp = expected[name]
                     val act = actual[name]

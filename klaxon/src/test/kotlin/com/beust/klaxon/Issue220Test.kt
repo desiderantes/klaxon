@@ -1,12 +1,12 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.fail
-import org.testng.annotations.Test
+
+import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.throwable.shouldHaveStackTraceContaining
 import java.time.LocalDate
 
-@Test
-class Issue220Test {
+class Issue220Test : FunSpec() {
     private val dateTime = object : Converter {
         override fun canConvert(cls: Class<*>) = cls == LocalDate::class.java
         override fun fromJson(jv: JsonValue): LocalDate = LocalDate.parse(jv.string)
@@ -24,24 +24,25 @@ class Issue220Test {
     """.trimIndent()
 
     data class Person(
-            val lastName: String,
-            val firstName: String,
-            val dateOfBirth: LocalDate,
-            val numberOfEyes: Int
+        val lastName: String,
+        val firstName: String,
+        val dateOfBirth: LocalDate,
+        val numberOfEyes: Int
     )
 
-    fun displayMeaningfulErrorMessage() {
-        val klaxon = Klaxon().apply {
-            converter(dateTime)
+    init {
+        test("displayMeaningfulErrorMessage") {
+            val klaxon = Klaxon().apply {
+                converter(dateTime)
+            }
+
+            // This should fail because numberOfEyes is a String instead of an Int
+            val e = shouldThrowExactly<KlaxonException> {
+                klaxon.parse<Person>(referenceFailingTestFixture)
+            }
+            e shouldHaveStackTraceContaining "Parameter numberOfEyes"
+
         }
 
-        try {
-            val janeDoe = klaxon.parse<Person>(referenceFailingTestFixture)
-            assertThat(janeDoe!!.numberOfEyes).isGreaterThan(0)
-            fail("Should have failed to parse that JSON")
-        } catch(e: KlaxonException) {
-            assertThat(e.message).contains("Parameter numberOfEyes")
-        }
     }
-
 }

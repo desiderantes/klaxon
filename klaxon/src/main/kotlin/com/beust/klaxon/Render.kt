@@ -15,8 +15,7 @@ object Render {
                     level)
             is List<*> -> renderValue(JsonArray(v), result, prettyPrint, canonical, level)
             is Pair<*, *> -> renderValue(v.second, result.renderString(v.first.toString()).append(": "), prettyPrint, canonical, level)
-            is Double, is Float ->
-                result.append(if (canonical) decimalFormat.format(v) else v.toString())
+            is Double, is Float -> result.append(if (canonical) decimalFormat.format(v) else v.toString())
             null -> result.append("null")
             else -> {
                 // TODO - Here we are reusing Converter.toJson() logic, but loose support for prettyPrint and canonical
@@ -43,7 +42,7 @@ object Render {
                     else -> {
                         if (isNotPrintableUnicode(ch)) {
                             append("\\u")
-                            append(Integer.toHexString(ch.toInt()).padStart(4, '0'))
+                            append(Integer.toHexString(ch.code).padStart(4, '0'))
                         } else {
                             append(ch)
                         }

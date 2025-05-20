@@ -1,26 +1,24 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Percentage
-import org.testng.Assert
-import org.testng.annotations.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.floats.shouldBeWithinPercentageOf
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
-data class Card(val value: Int, val suit: String)
-data class Deck1(val card: Card, val cardCount: Int)
-
-@Test
-class BindingTest {
-
-    //
-    // Tests objects -> JSON string
-    //
+//
+// Tests objects -> JSON string
+//
+class BindingTest : FunSpec({
 
     data class ArrayHolder(var listOfInts: List<Int> = emptyList(),
             var listOfStrings : List<String> = emptyList(),
             var listOfBooleans: List<Boolean> = emptyList(),
             var string: String = "foo", var isTrue: Boolean = true, var isFalse: Boolean = false)
 
-    fun arrayToJson() {
+  test("arrayToJson") {
         val klaxon = Klaxon()
         val h = ArrayHolder(listOf(1, 3, 5),
                 listOf("d", "e", "f"),
@@ -32,51 +30,44 @@ class BindingTest {
                 "\"string\" : \"foo\"",
                 "\"isTrue\" : true",
                 "\"isFalse\" : false").forEach {
-            assertThat(s).contains(it)
+          s shouldContain it
         }
     }
 
-    val CARD_CONVERTER = object: Converter {
-        override fun canConvert(cls: Class<*>) = cls == Card::class.java
 
-        override fun fromJson(jv: JsonValue) = Card(jv.objInt("value"), jv.objString("suit"))
 
-        override fun toJson(v: Any) = (v as Card).let { value ->
-            """
-                    "value" : ${value.value},
-                    "suit": "${value.suit.toUpperCase()}"
-                """
-        }
-    }
-
-    fun objectsToJson() {
+  test("objectsToJson") {
         val deck1 = Deck1(cardCount = 1, card = Card(13, "Clubs"))
         val s = Klaxon()
-                .converter(CARD_CONVERTER)
+          .converter(CardConverter)
                 .toJsonString(deck1)
         listOf("\"CLUBS\"", "\"suit\"", "\"value\"", "13", "\"cardCount\"", "1").forEach {
-            Asserts.assertContains(s, it)
+          s shouldContain it
         }
     }
 
-    fun doubleTest() {
-        class C(val f: Float)
-        val json = """ { "f": 1.23 } """
-        val r = Klaxon().parse<C>(json)
-        assertThat(r?.f).isCloseTo(1.23f, Percentage.withPercentage(1.0))
-    }
+  test("doubleTest") {
+    class C(val f: Float)
+    val json = """ { "f": 1.23 } """
+    val r = Klaxon().parse<C>(json)
+    r.shouldNotBeNull()
+    r.f.shouldNotBeNull()
+    r.f.shouldBeWithinPercentageOf(1.23f, 1.0)
+   }
 
     //
     // Tests parsing
     //
 
-    data class AllTypes constructor(var int: Int? = null,
-            var string: String? = null,
-            var isTrue: Boolean? = null,
-            var isFalse: Boolean? = null,
-            val balanceDouble: Double,
-            var array: List<Int> = emptyList())
-    fun allTypes() {
+  data class AllTypes(
+    var int: Int? = null,
+    var string: String? = null,
+    var isTrue: Boolean? = null,
+    var isFalse: Boolean? = null,
+    val balanceDouble: Double,
+    var array: List<Int> = emptyList()
+  )
+  test("allTypes") {
         val expectedDouble = Double.MAX_VALUE - 1
         val result = Klaxon().parse<AllTypes>("""
         {
@@ -88,10 +79,11 @@ class BindingTest {
             "balanceDouble": $expectedDouble
         }
         """)
-        Assert.assertEquals(result, AllTypes(42, "foo", true, false, expectedDouble, listOf(11, 12)))
+    result.shouldNotBeNull()
+    result shouldBe  AllTypes(42, "foo", true, false, expectedDouble, listOf(11, 12))
     }
 
-    fun compoundObject() {
+  test("compoundObject") {
         val jsonString = json {
             obj(
                 "cardCount" to 2,
@@ -103,16 +95,16 @@ class BindingTest {
         }.toJsonString()
 
         val result = Klaxon().parse<Deck1>(jsonString)
-        if (result != null) {
-            Assert.assertEquals(result, Deck1(Card(5, "Hearts"), 2))
-        } else {
-            Assert.fail("Should have received a non null deck")
-        }
+    result.shouldNotBeNull()
+    result.cardCount shouldBe 2
+    result.card.value shouldBe 5
+    result.card.suit shouldBe "Hearts"
+
     }
 
-    fun compoundObjectWithConverter() {
+  test("compoundObjectWithConverter") {
         val result = Klaxon()
-                .converter(CARD_CONVERTER)
+          .converter(CardConverter)
                 .parse<Deck1>("""
         {
           "cardCount": 2,
@@ -121,11 +113,10 @@ class BindingTest {
         }
         """)
 
-        if (result != null) {
-            Assert.assertEquals(result, Deck1(Card(5, "Hearts"), 2))
-        } else {
-            Assert.fail("Should have received a non null deck")
-        }
+    result.shouldNotBeNull()
+    result.cardCount shouldBe 2
+    result.card.value shouldBe 5
+    result.card.suit shouldBe "Hearts"
     }
 
     data class Deck2(
@@ -133,7 +124,7 @@ class BindingTest {
             var cardCount: Int? = null
     )
 
-    fun compoundObjectWithArray() {
+  test("compoundObjectWithArray") {
         val result = Klaxon()
                 .parse<Deck2>("""
         {
@@ -144,16 +135,14 @@ class BindingTest {
           ]
         }
     """)
-
-        if (result != null) {
-            Assert.assertEquals(result.cardCount, 2)
-            Assert.assertEquals(result.cards, listOf(Card(5, "Hearts"), Card(8, "Spades")))
-        } else {
-            Assert.fail("Should have received a non null deck")
-        }
+    result.shouldNotBeNull()
+    result.cardCount shouldBe 2
+    result.cards shouldHaveSize 2
+    result.cards[0] shouldBe Card(5, "Hearts")
+    result.cards[1] shouldBe Card(8, "Spades")
     }
 
-    fun compoundObjectWithObjectWithConverter() {
+  test("compoundObjectWithObjectWithConverter") {
         val json = """{
             "preferences": [1,2,3],
             "properties":{"a":"b"}
@@ -165,12 +154,12 @@ class BindingTest {
         )
 
         val p: Person = Klaxon().parse(json)!!
-        Assert.assertEquals(p, Person(listOf(1, 2, 3), mapOf("a" to "b")))
+    p shouldBe Person(listOf(1, 2, 3), mapOf("a" to "b"))
     }
 
-    fun compoundObjectWithArrayWithConverter() {
+  test("compoundObjectWithArrayWithConverter") {
         val result = Klaxon()
-                .converter(CARD_CONVERTER)
+          .converter(CardConverter)
                 .parse<Deck2>("""
         {
           "cardCount": 2,
@@ -181,12 +170,11 @@ class BindingTest {
         }
     """)
 
-        if (result != null) {
-            Assert.assertEquals(result.cardCount, 2)
-            Assert.assertEquals(result.cards, listOf(Card(5, "Hearts"), Card(8, "Spades")))
-        } else {
-            Assert.fail("Should have received a non null deck")
-        }
+    result.shouldNotBeNull()
+    result.cardCount shouldBe 2
+    result.cards shouldHaveSize 2
+    result.cards[0] shouldBe Card(5, "Hearts")
+    result.cards[1] shouldBe Card(8, "Spades")
     }
 
     class Mapping(
@@ -194,98 +182,131 @@ class BindingTest {
         val name: String
     )
 
-    fun toJsonStringHonorsJsonAnnotation() {
+  test("toJsonStringHonorsJsonAnnotation") {
         val s = Klaxon().toJsonString(Mapping("John"))
-        Assert.assertTrue(s.contains("theName"))
+    s shouldContain "theName"
     }
 
-    @Test(expectedExceptions = [(KlaxonException::class)])
-    fun badFieldMapping() {
-        Klaxon().parse<Mapping>("""
+  test("badFieldMapping") {
+    shouldThrow<KlaxonException> {
+      Klaxon().parse<Mapping>(
+        """
         {
           "name": "foo"
         }
-        """)
+        """
+      )
+    }
     }
 
-    fun goodFieldMapping() {
+  test("goodFieldMapping") {
         val result = Klaxon().parse<Mapping>("""
         {
           "theName": "foo"
         }
         """)
-        Assert.assertEquals(result?.name, "foo")
+    result.shouldNotBeNull()
+    result.name shouldBe "foo"
+
     }
 
-    enum class Cardinal { NORTH, SOUTH }
-    class Direction(var cardinal: Cardinal? = null)
-    fun enum() {
+
+  test("enum") {
         val result = Klaxon().parse<Direction>("""
             { "cardinal": "NORTH" }
         """
         )
-        Assert.assertEquals(result?.cardinal, Cardinal.NORTH)
+    result.shouldNotBeNull()
+    result.cardinal.shouldNotBeNull()
+    result.cardinal shouldBe  Cardinal.NORTH
     }
 
     class TestObj(var idShort: Long? = null, var idLong: Long? = null)
 
-    fun longTest() {
+  test("longTest") {
         val expectedShort = 123 // Test widening Int -> Long property
         val expectedLong = 53147483640L
         val result = Klaxon().parse<TestObj>(""" {"idShort": $expectedShort, "idLong": $expectedLong } """)
-        Assert.assertEquals(result?.idShort, expectedShort.toLong())
-        Assert.assertEquals(result?.idLong, expectedLong)
+    result.shouldNotBeNull()
+    result.idShort shouldBe expectedShort
+    result.idLong shouldBe expectedLong
     }
 
     class PersonWithDefaults(val age: Int, var name: String = "Foo")
-    fun defaultParameters() {
+  test("defaultParameters") {
         val result = Klaxon().parse<PersonWithDefaults>(json {
             obj(
                 "age" to 23
             )
         }.toJsonString())!!
+    result.shouldNotBeNull()
+    result.age shouldBe 23
+    result.name shouldBe "Foo"
+  }
 
-        Assert.assertEquals(result.age, 23)
-        Assert.assertEquals(result.name, "Foo")
-    }
 
-    sealed class Dir(val name: String) {
-        class Left(val n: Int): Dir("Left")
-    }
 
-    fun sealedClass() {
+  test("sealedClass") {
         val result = Klaxon().parse<Dir.Left>("""{
             "n": 2
         }"""
         )!!
-
-        Assert.assertEquals(result.n, 2)
+    result.shouldNotBeNull()
+    result.n shouldBe 2
     }
 
-    fun serializeMap() {
+  test("serializeMap") {
         val data = mapOf("firstName" to "John")
         val result = Klaxon().toJsonString(data)
-        Assert.assertTrue(result.contains("firstName"))
-        Assert.assertTrue(result.contains("John"))
+    result.shouldNotBeNull()
+    result shouldContain "firstName"
+    result shouldContain "John"
     }
 
-    interface Entity<T> {
-        val value: T
-    }
 
-    fun generics() {
+  test("generics") {
         class LongEntity(override val value: Long) : Entity<Long>
 
         val result = Klaxon().parse<LongEntity>("""{
             "value": 42
         }""")
-        assertThat(result?.value).isEqualTo(42)
+    result.shouldNotBeNull()
+    result.value shouldBe 42
+
     }
 
-    fun set() {
+  test("set") {
         data class A(val data: Set<String>)
         val b = A(setOf("test"))
         val json = Klaxon().toJsonString(b)
         Klaxon().parse<A>(json)
     }
+
+}) {
+
+
+  data class Card(val value: Int, val suit: String)
+  data class Deck1(val card: Card, val cardCount: Int)
+  enum class Cardinal { NORTH, SOUTH }
+  class Direction(var cardinal: Cardinal? = null)
+  sealed class Dir(val name: String) {
+    class Left(val n: Int) : Dir("Left")
+  }
+
+  object CardConverter : Converter {
+    override fun canConvert(cls: Class<*>) = cls == Card::class.java
+
+    override fun fromJson(jv: JsonValue) = Card(jv.objInt("value"), jv.objString("suit"))
+
+    override fun toJson(v: Any) = (v as Card).let { value ->
+      """
+                    "value" : ${value.value},
+                    "suit": "${value.suit.uppercase()}"
+                """
+    }
+  }
+
+  interface Entity<T> {
+    val value: T
+  }
 }

@@ -2,9 +2,14 @@
 
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions.assertThat
-import org.testng.Assert
-import org.testng.annotations.Test
+import com.beust.klaxon.BindingTest.Card
+import com.beust.klaxon.BindingTest.Deck1
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.throwable.shouldHaveMessage
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -13,8 +18,7 @@ annotation class KlaxonDate
 @Target(AnnotationTarget.FIELD)
 annotation class KlaxonDayOfTheWeek
 
-@Test
-class BindingAdapterTest {
+class BindingAdapterTest : AnnotationSpec() {
     class WrongFieldAdapter(
         @KlaxonDate
         // Need to keep that unused field or the test will break
@@ -23,17 +27,19 @@ class BindingAdapterTest {
 
     @Test
     fun wrongFieldAdapter() {
-        try {
+        val ex = shouldThrow<Exception> {
             createKlaxon()
-                    .parse<WrongFieldAdapter>("""
+                .parse<WrongFieldAdapter>(
+                    """
                 {
                   "dayOfTheWeek": 2
                 }
-            """)
-            Assert.fail("Should have been unable to convert")
-        } catch(ex: Exception) {
-            Assert.assertTrue(ex.message?.contains("Couldn't parse") ?: false)
+            """
+                )
+
         }
+        ex shouldHaveMessage ".*Couldn't parse.*".toRegex()
+
     }
 
     class WithDate(
@@ -82,6 +88,7 @@ class BindingAdapterTest {
                 }
             })
 
+    @Test
     fun fieldAdapters() {
         val result = createKlaxon()
             .parse<WithDate>("""
@@ -90,8 +97,9 @@ class BindingAdapterTest {
               "dayOfTheWeek": 2
             }
         """)
-        Assert.assertEquals(result?.dayOfTheWeek, "Tuesday")
-        Assert.assertEquals(result?.date, LocalDateTime.of(2017, 5, 10, 16, 30))
+        result.shouldNotBeNull()
+        result.dayOfTheWeek shouldBe "Tuesday"
+        result.date shouldBe LocalDateTime.of(2017, 5, 10, 16, 30)
     }
 
     companion object {
@@ -138,16 +146,19 @@ class BindingAdapterTest {
                 "card" : "KS"
             }
         """)
-        assertThat(result?.cardCount).isEqualTo(1)
-        assertThat(result?.card).isEqualTo(Card(13, "Spades"))
+        result.shouldNotBeNull()
+        result.cardCount shouldBe 1
+        result.card shouldBe Card(13, "Spades")
     }
 
+    @Test
     fun withConverter2() = privateConverter2(withAdapter = true)
 
-    @Test(expectedExceptions = [KlaxonException::class])
+    @Test(expected = KlaxonException::class)
     fun withoutConverter2() = privateConverter2(withAdapter = false)
 
     class Person(var fullName: String? = null)
+    @Test
     fun personMappingTest() {
 
         val result = Klaxon()
@@ -167,10 +178,12 @@ class BindingAdapterTest {
                 "lastName": "Smith"
             }
         """)
-        assertThat(result?.fullName).isEqualTo("John Smith")
+        result.shouldNotBeNull()
+        result.fullName shouldBe "John Smith"
     }
 
     class BooleanHolder(var flag: Boolean? = null)
+    @Test
     fun booleanConverter() {
         val result = Klaxon()
             .converter(object: Converter {
@@ -188,7 +201,9 @@ class BindingAdapterTest {
             { "flag": 1 }, { "flag": 0 }
             ]
         """)
-        assertThat(result?.get(0)?.flag).isTrue()
-        assertThat(result?.get(1)?.flag).isFalse()
+        result.shouldNotBeNull()
+        result.shouldHaveSize(2)
+        result[0].flag shouldBe true
+        result[1].flag shouldBe false
     }
 }

@@ -32,14 +32,14 @@ sealed class Token {
 }
 
 open class Value<out T>(val value: T) : Token()
-object VALUE_TYPE : Value<Nothing?>(null)   // Use as a TokenType only
-object LEFT_BRACE : Token()
-object RIGHT_BRACE : Token()
-object LEFT_BRACKET : Token()
-object RIGHT_BRACKET : Token()
-object COMMA : Token()
-object COLON : Token()
-object EOF : Token()
+data object VALUE_TYPE : Value<Nothing?>(null)   // Use as a TokenType only
+data object LEFT_BRACE : Token()
+data object RIGHT_BRACE : Token()
+data object LEFT_BRACKET : Token()
+data object RIGHT_BRACKET : Token()
+data object COMMA : Token()
+data object COLON : Token()
+data object EOF : Token()
 
 // This should be used when referring to a Token as a type, to avoid confusion. (see StateMachine)
 typealias TokenType = Token

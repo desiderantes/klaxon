@@ -186,7 +186,7 @@ class Klaxon(
 
     private val DEFAULT_CONVERTER = DefaultConverter(this, allPaths)
 
-    private val converters = arrayListOf<Converter>(EnumConverter(), DEFAULT_CONVERTER)
+    private val converters = arrayListOf(EnumConverter(), DEFAULT_CONVERTER)
 
     /**
      * Add a type converter. The converter is analyzed to find out which type it converts
@@ -244,9 +244,9 @@ class Klaxon(
             if (prop != null && prop.returnType.classifier is KClass<*>) {
                 propertyClass = (prop.returnType.classifier as KClass<*>).java
                 val dc = prop.getter.javaMethod?.declaringClass ?: prop.javaField?.declaringClass
-                annotationsForProp(prop, dc!!).mapNotNull {
+                annotationsForProp(prop, dc!!).firstNotNullOfOrNull {
                     fieldTypeMap[it.annotationClass]
-                }.firstOrNull()
+                }
             } else {
                 null
             }
@@ -268,21 +268,8 @@ class Klaxon(
         return converters.firstOrNull { it.canConvert(toConvert) }
     }
 
-    fun toJsonString(value: Any?, prop: KProperty<*>? = null): String
-            = if (value == null) "null" else toJsonString(value, findConverter(value, prop))
-
-    private fun toJsonString(value: Any, converter: Any /* can be Converter or Converter */)
-            : String {
-        // It's not possible to safely call converter.toJson(value) since its parameter is generic,
-        // so use reflection
-        val toJsonMethod = converter::class.functions.firstOrNull { it.name == "toJson" }
-        val result =
-            if (toJsonMethod != null) {
-                toJsonMethod.call(converter, value) as String
-            } else {
-                throw KlaxonException("Couldn't find a toJson() function on converter $converter")
-            }
-        return result
+    fun toJsonString(value: Any?, prop: KProperty<*>? = null): String {
+        return if (value == null) "null" else findConverter(value, prop).toJson(value)
     }
 
     /**

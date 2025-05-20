@@ -1,56 +1,63 @@
 package com.beust.klaxon
 
-import org.assertj.core.api.Assertions
-import org.testng.Assert
-import org.testng.annotations.Test
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.equals.shouldBeEqual
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-@Test
-class JsonAnnotationTest {
-    private val jsonString: String = json { obj(
+
+class JsonAnnotationTest : FunSpec({
+    val jsonString: String = json {
+        obj(
             "name" to "John",
             "change" to 1
-    ) }.toJsonString()
+        )
+    }.toJsonString()
 
-    fun ignoredWithAnnotation() {
+    test("ignoredWithAnnotation") {
         class IgnoredWithAnnotation(
-                val name: String,
-                @Json(ignored = true)
-                val change: Int = 0)
+            val name: String,
+            @Json(ignored = true)
+            val change: Int = 0
+        )
 
         val result = Klaxon().parse<IgnoredWithAnnotation>(jsonString)
-        Assert.assertEquals(result?.name, "John")
-        Assert.assertEquals(result?.change, 0)
+        result.shouldNotBeNull()
+        result.name shouldBe "John"
+        result.change shouldBe 0
     }
 
-    fun ignoredWithPrivate() {
+    test("ignoredWithPrivate") {
         class IgnoredWithPrivate(
-                val name: String,
-                private val change: Int = 0){
+            val name: String,
+            private val change: Int = 0
+        ) {
             fun changed(): Boolean = change != 0
         }
 
         val result = Klaxon().parse<IgnoredWithPrivate>(jsonString)
-        Assert.assertEquals(result?.name, "John")
-        Assert.assertEquals(result?.changed(), false)
+        result.shouldNotBeNull()
+        result.name shouldBe "John"
+        result.changed() shouldBe false
     }
 
-    @Test
-    fun privateNotIgnored() {
+    test("privateNotIgnored") {
         data class Config(
-                val version: String,
-                @Json(ignored = false)
-                private val projects: Set<String>) {
+            val version: String,
+            @Json(ignored = false)
+            private val projects: Set<String>
+        ) {
             fun contains(name: String) = projects.contains(name)
         }
 
         val jsonString = """{"version": "v1", "projects": ["abc"]}"""
         val r = Klaxon().parse<Config>(jsonString)
-        Assertions.assertThat(r).isEqualTo(Config("v1", setOf("abc")))
+        r.shouldNotBeNull()
+        r shouldBeEqual Config("v1", setOf("abc"))
 
     }
 
-    @Test
-    fun serializeNullFalseRoundtripWithoutDefault() {
+    test("serializeNullFalseRoundtripWithoutDefault") {
         // when serializeNull == false, null is the default value during parsing
         data class ObjWithSerializeNullFalse(
             @Json(serializeNull = false)
@@ -59,15 +66,13 @@ class JsonAnnotationTest {
 
         val originalObj = ObjWithSerializeNullFalse(null)
         val serialized = Klaxon().toJsonString(originalObj)
-        Assert.assertEquals("{}", serialized) // with serializeNull = false, the null property is not serialized
+        serialized shouldBe "{}" // with serializeNull = false, the null property is not serialized
         val parsed = Klaxon().parse<ObjWithSerializeNullFalse>(serialized)
         val expected = ObjWithSerializeNullFalse(null)
-
-        Assert.assertEquals(expected, parsed)
+        parsed shouldBe expected
     }
 
-    @Test
-    fun serializeNullFalseRoundtripWithDefault() {
+    test("serializeNullFalseRoundtripWithDefault") {
         // Kotlin defaults are ignored when serializeNull == false and replaced with null during parsing
         data class ObjWithSerializeNullFalseAndDefault(
             @Json(serializeNull = false)
@@ -76,53 +81,38 @@ class JsonAnnotationTest {
 
         val originalObj = ObjWithSerializeNullFalseAndDefault(null)
         val serialized = Klaxon().toJsonString(originalObj)
-        Assert.assertEquals("{}", serialized)
+        serialized shouldBe "{}"
         val parsed = Klaxon().parse<ObjWithSerializeNullFalseAndDefault>(serialized)
         val expected = ObjWithSerializeNullFalseAndDefault(null)
 
-        Assert.assertEquals(expected, parsed)
+        parsed shouldBe expected
     }
 
-    @Test
-    fun serializeNullFalseValueSet() {
+    test("serializeNullFalseValueSet") {
         data class ObjWithSerializeNullFalse(
             @Json(serializeNull = false)
             val value: Int?
         )
 
-        Assertions
-            .assertThat(
-                Klaxon().toJsonString(
-                    ObjWithSerializeNullFalse(1)
-                )
-            )
-            .isEqualTo("""{"value" : 1}""")
+        val result = Klaxon().toJsonString(ObjWithSerializeNullFalse(1))
+        result shouldBe """{"value" : 1}"""
     }
 
-    @Test
-    fun serializeNullTrue() {
+    test("serializeNullTrue") {
         data class ObjWithSerializeNullTrue(
             @Json(serializeNull = true)
             val value: Int?
         )
 
-        Assertions
-            .assertThat(
-                Klaxon().toJsonString(
-                    ObjWithSerializeNullTrue(null)
-                )
-            )
-            .isEqualTo("""{"value" : null}""")
+        var parsedString = Klaxon().toJsonString(ObjWithSerializeNullTrue(null))
+        parsedString shouldBe """{"value" : null}"""
 
-        Assertions
-            .assertThat(
-                Klaxon().toJsonString(
-                    ObjWithSerializeNullTrue(1)))
-            .isEqualTo("""{"value" : 1}""")
+        parsedString = Klaxon().toJsonString(ObjWithSerializeNullTrue(1))
+
+        parsedString shouldBe """{"value" : 1}"""
     }
 
-    @Test
-    fun serializeNullWithoutNullableProperty() {
+    test("serializeNullWithoutNullableProperty") {
         data class ObjWithSerializeNullFalse(
             @Json(serializeNull = false)
             val value: Int = 1
@@ -131,6 +121,6 @@ class JsonAnnotationTest {
         val parsed = Klaxon().parse<ObjWithSerializeNullFalse>("{}")
         val expected = ObjWithSerializeNullFalse(1)
 
-        Assert.assertEquals(expected, parsed)
+        parsed shouldBe expected
     }
-}
+})

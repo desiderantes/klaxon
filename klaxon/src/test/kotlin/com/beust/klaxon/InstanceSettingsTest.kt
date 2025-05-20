@@ -1,11 +1,11 @@
 package com.beust.klaxon
 
-import org.testng.annotations.Test
-import kotlin.test.assertContains
-import kotlin.test.assertFalse
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 
-@Test
-class InstanceSettingsTest {
+
+class InstanceSettingsTest : FunSpec() {
 
     @Suppress("unused")
     class UnannotatedGeolocationCoordinates(
@@ -32,57 +32,51 @@ class InstanceSettingsTest {
     private val noNullCoordinates = NoNullAnnotatedGeolocationCoordinates(1, 2, null)
     private val nullCoordinates = NullAnnotatedGeolocationCoordinates(1, 2, null)
 
-    // Defaults & single-type settings
 
-    @Test
-    fun defaultSerialization() {
-        val klaxon = Klaxon()
-        val json = klaxon.toJsonString(unannotatedCoordinates)
-        assertContains(json, "null") // {"latitude" : 1, "longitude" : 2, "speed" : null}
-    }
+    init {
+        test("Defaults & single-type settings") {
+            val klaxon = Klaxon()
+            val json = klaxon.toJsonString(unannotatedCoordinates)
+            json shouldContain "null" // {"latitude" : 1, "longitude" : 2, "speed" : null}
+        }
 
-    @Test // no local settings, instance serializeNull = true -> null
-    fun instanceSettingsNullSerialization() {
-        val klaxon = Klaxon(instanceSettings = KlaxonSettings(serializeNull = true))
-        val json = klaxon.toJsonString(unannotatedCoordinates)
-        assertContains(json, "null") // {"latitude" : 1, "longitude" : 2, "speed" : null}
-    }
+        test("no local settings, instance serializeNull = true -> null") {
+            val klaxon = Klaxon(instanceSettings = KlaxonSettings(serializeNull = true))
+            val json = klaxon.toJsonString(unannotatedCoordinates)
+            json shouldContain "null" // {"latitude" : 1, "longitude" : 2, "speed" : null}
+        }
 
-    @Test // no local settings, instance serializeNull = false -> no null
-    fun instanceSettingsNoNullSerialization() {
-        val klaxon = Klaxon(KlaxonSettings(serializeNull = false))
-        val json = klaxon.toJsonString(unannotatedCoordinates)
-        assertFalse { json.contains("null") } // {"latitude" : 1, "longitude" : 2}
-    }
+        test("no local settings, instance serializeNull = false -> no null") {
+            val klaxon = Klaxon(KlaxonSettings(serializeNull = false))
+            val json = klaxon.toJsonString(unannotatedCoordinates)
+            json shouldNotContain "null" // {"latitude" : 1, "longitude" : 2}
+        }
 
-    @Test // local serializeNull = false, no instance settings -> no null
-    fun localSettingsNoNullSerialization() {
-        val klaxon = Klaxon()
-        val json = klaxon.toJsonString(noNullCoordinates)
-        assertFalse { json.contains("null") } // {"latitude" : 1, "longitude" : 2}
-    }
+        test("local serializeNull = false, no instance settings -> no null") {
+            val klaxon = Klaxon()
+            val json = klaxon.toJsonString(noNullCoordinates)
+            json shouldNotContain "null" // {"latitude" : 1, "longitude" : 2}
+        }
 
-    @Test // local serializeNull = true, no instance settings -> null
-    fun localSettingsNullSerialization() {
-        val klaxon = Klaxon()
-        val json = klaxon.toJsonString(nullCoordinates)
-        assertContains(json, "null") // {"latitude" : 1, "longitude" : 2, "speed" : null}
-    }
+        test("local serializeNull = true, no instance settings -> null") {
+            val klaxon = Klaxon()
+            val json = klaxon.toJsonString(nullCoordinates)
+            json shouldContain "null"// {"latitude" : 1, "longitude" : 2, "speed" : null}
+        }
 
-    //
-    // Mixed tests
+        //
+        // Mixed tests
 
-    @Test // local serializeNull = true, instance serializeNull = false -> null
-    fun localNullInstanceNoNullSerialization() {
-        val klaxon = Klaxon(KlaxonSettings(serializeNull = false))
-        val json = klaxon.toJsonString(nullCoordinates)
-        assertContains(json, "null") // {"latitude" : 1, "longitude" : 2, "speed" : null}
-    }
+        test("local serializeNull = true, instance serializeNull = false -> null") {
+            val klaxon = Klaxon(KlaxonSettings(serializeNull = false))
+            val json = klaxon.toJsonString(nullCoordinates)
+            json shouldContain "null" // {"latitude" : 1, "longitude" : 2, "speed" : null}
+        }
 
-    @Test // local serializeNull = false, instance serializeNull = true -> no null
-    fun localNoNullInstanceNullSerialization() {
-        val klaxon = Klaxon(KlaxonSettings(serializeNull = true))
-        val json = klaxon.toJsonString(noNullCoordinates)
-        assertFalse { json.contains("null") } // {"latitude" : 1, "longitude" : 2}
+        test("local serializeNull = false, instance serializeNull = true -> no null") {
+            val klaxon = Klaxon(KlaxonSettings(serializeNull = true))
+            val json = klaxon.toJsonString(noNullCoordinates)
+            json shouldNotContain "null" // {"latitude" : 1, "longitude" : 2}
+        }
     }
 }
